@@ -1,0 +1,25 @@
+{
+  "name": "gatehouse",
+  "version": "4.2.0",
+  "private": true,
+  "description": "GATEHOUSE: Tactical Autonomous Business Infrastructure & AI Operations Command Post",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "concurrently -k -n \"api,web\" -c \"red,cyan\" \"npm run dev:api\" \"npm run dev:web\"",
+    "dev:web": "npm run dev --workspace=@gatehouse/web",
+    "dev:api": "npm run dev --workspace=@gatehouse/api",
+    "db:verify": "node scripts/verify-database.js",
+    "db:migrate": "python apps/api/database/migrate.py",
+    "build": "npm run build --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "clean": "npm run clean --workspaces --if-present"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2",
+    "pg-mem": "^3.0.14"
+  }
+}

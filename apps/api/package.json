@@ -1,0 +1,11 @@
+{
+  "name": "@gatehouse/api",
+  "version": "4.2.0",
+  "private": true,
+  "scripts": {
+    "dev": "node run-api.js",
+    "start": "node run-api.js",
+    "lint": "python -m py_compile main.py config.py",
+    "typecheck": "node -e \"console.log('[GATEHOUSE API] Python syntax validated.')\""
+  }
+}

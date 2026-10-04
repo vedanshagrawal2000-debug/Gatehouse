@@ -1,0 +1,65 @@
+import type { Config } from 'tailwindcss';
+
+const config: Config = {
+  darkMode: 'class',
+  content: [
+    './app/**/*.{js,ts,jsx,tsx,mdx}',
+    './pages/**/*.{js,ts,jsx,tsx,mdx}',
+    './components/**/*.{js,ts,jsx,tsx,mdx}',
+    '../../packages/*/src/**/*.{js,ts,jsx,tsx}',
+  ],
+  theme: {
+    extend: {
+      colors: {
+        surface: '#111318',
+        'surface-dim': '#111318',
+        'surface-bright': '#37393f',
+        'surface-container-lowest': '#0c0e13',
+        'surface-container-low': '#1a1b21',
+        'surface-container': '#1e2025',
+        'surface-container-high': '#282a2f',
+        'surface-container-highest': '#33353a',
+        'on-surface': '#e2e2e9',
+        'on-surface-variant': '#e6bdb8',
+        'outline': '#ac8884',
+        'outline-variant': '#5c403c',
+        primary: '#ffb4ab',
+        'primary-container': '#dc2626',
+        'on-primary': '#690005',
+        'on-primary-container': '#fff6f5',
+        secondary: '#4edea3',
+        'secondary-container': '#00a572',
+        'on-secondary': '#003824',
+        tertiary: '#ffb95f',
+        'tertiary-container': '#a06500',
+        'on-tertiary': '#472a00',
+        error: '#ffb4ab',
+        'error-container': '#93000a',
+        'brand-base': '#08090B',
+        'border-default': '#2A2E39',
+        'border-crimson': '#EF4444',
+      },
+      fontFamily: {
+        sans: ['Geist', 'sans-serif'],
+        mono: ['JetBrains Mono', 'monospace'],
+        headline: ['Space Grotesk', 'sans-serif'],
+        tactical: ['JetBrains Mono', 'monospace'],
+      },
+      spacing: {
+        'space-xs': '0.25rem',
+        'space-sm': '0.5rem',
+        'space-md': '1rem',
+        'space-lg': '1.5rem',
+        'space-xl': '2.5rem',
+        gutter: '1rem',
+        'gutter-lg': '1.5rem',
+        margin: '1rem',
+        'margin-md': '1.5rem',
+        'margin-lg': '2rem',
+      },
+    },
+  },
+  plugins: [],
+};
+
+export default config;

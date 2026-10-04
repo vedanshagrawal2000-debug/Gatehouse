@@ -1,0 +1,43 @@
+import { AgentNode } from '@gatehouse/shared';
+
+export const GATEHOUSE_AGENTS: AgentNode[] = [
+  {
+    id: 'customer',
+    name: 'Customer Agent',
+    role: 'Autonomous Dispute & Ticket Routing',
+    status: 'ready',
+    execution_rate: '99.4% EXEC',
+    description: 'Resolving multi-tier disputes, triaging Tier-1 priority tickets, auto-routing escalations.',
+    queue_pending: 0,
+    external_system: 'CRM // ZENDESK',
+    system_status: 'READY',
+    requires_approval: false,
+    model: 'gemini-2.5-flash',
+  },
+  {
+    id: 'inventory',
+    name: 'Inventory Agent',
+    role: 'Predictive Supply Chain & PO Dispatch',
+    status: 'sync_active',
+    execution_rate: 'SYNC ACTIVE',
+    description: 'Syncing Warehouse 04, telemetry predictive depletion models, instant vendor PO dispatch.',
+    queue_pending: 0,
+    external_system: 'ERP: SAP / ORACLE',
+    system_status: 'OK // 8MS',
+    requires_approval: false,
+    model: 'gemini-2.5-flash',
+  },
+  {
+    id: 'finance',
+    name: 'Finance Agent',
+    role: 'Ledger Reconciliation & Gated Payouts',
+    status: 'gate_pending',
+    execution_rate: 'GATE PENDING',
+    description: 'Reconciling ledger entries. Automated dispatch halted on payouts >$25k for security sign-off.',
+    queue_pending: 1,
+    external_system: 'LEDGER: ACC_0941',
+    system_status: 'SIG REQ',
+    requires_approval: true,
+    model: 'gemini-2.5-pro',
+  },
+];
