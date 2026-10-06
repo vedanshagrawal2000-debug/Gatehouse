@@ -19,7 +19,8 @@ if (isWindows && fs.existsSync(venvPythonWin)) {
 
 console.log(`[GATEHOUSE API] Launching FastAPI backend using: ${pythonCmd}`);
 
-const args = ['-m', 'uvicorn', 'main:app', '--reload', '--port', '8000', '--host', '0.0.0.0'];
+const port = process.env.PORT || '8000';
+const args = ['-m', 'uvicorn', 'main:app', '--reload', '--port', port, '--host', '0.0.0.0'];
 
 const child = spawn(pythonCmd, args, {
   cwd: apiDir,

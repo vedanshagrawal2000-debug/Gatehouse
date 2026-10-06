@@ -6,6 +6,12 @@ from .supabase_client import (
     db_get_missions,
     db_get_approval_requests,
     db_get_audit_logs,
+    DEMO_AGENTS,
+    DEMO_INVENTORY,
+    DEMO_CUSTOMER_ENQUIRIES,
+    DEMO_MISSIONS,
+    DEMO_APPROVAL_REQUESTS,
+    DEMO_AUDIT_LOGS,
 )
 
 __all__ = [
@@ -16,4 +22,10 @@ __all__ = [
     "db_get_missions",
     "db_get_approval_requests",
     "db_get_audit_logs",
+    "DEMO_AGENTS",
+    "DEMO_INVENTORY",
+    "DEMO_CUSTOMER_ENQUIRIES",
+    "DEMO_MISSIONS",
+    "DEMO_APPROVAL_REQUESTS",
+    "DEMO_AUDIT_LOGS",
 ]

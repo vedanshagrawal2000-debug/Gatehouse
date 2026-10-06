@@ -64,3 +64,7 @@ logs/
 .turbo
 coverage/
 .nyc_output/
+
+# Local compatibility junctions
+backend/
+frontend/

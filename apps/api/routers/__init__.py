@@ -6,6 +6,8 @@ from .inventory import router as inventory_router
 from .enquiries import router as enquiries_router
 from .missions import router as missions_router
 from .audit import router as audit_router
+from .agent_router import router as agent_router
+from .stitch_api import router as stitch_router
 
 __all__ = [
     "health_router",
@@ -16,4 +18,6 @@ __all__ = [
     "enquiries_router",
     "missions_router",
     "audit_router",
+    "agent_router",
+    "stitch_router",
 ]

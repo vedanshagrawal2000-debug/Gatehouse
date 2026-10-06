@@ -10,6 +10,8 @@ from routers import (
     enquiries_router,
     missions_router,
     audit_router,
+    agent_router,
+    stitch_router,
 )
 
 app = FastAPI(
@@ -21,13 +23,28 @@ app = FastAPI(
 )
 
 # CORS configuration
+allowed_origins = list(settings.CORS_ORIGINS) if isinstance(settings.CORS_ORIGINS, list) else [str(settings.CORS_ORIGINS)]
+if settings.FRONTEND_URL and settings.FRONTEND_URL.strip():
+    clean_origin = settings.FRONTEND_URL.strip().rstrip("/")
+    if clean_origin not in allowed_origins:
+        allowed_origins.append(clean_origin)
+
+is_wildcard = "*" in allowed_origins
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.CORS_ORIGINS,
-    allow_credentials=True,
+    allow_origins=allowed_origins,
+    allow_credentials=not is_wildcard,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Standard Production Health Probe
+@app.get("/health", tags=["Health"])
+def health_check():
+    """Production health check probe for Render and uptime monitoring."""
+    return {"status": "ok"}
+
 
 # Register routers
 app.include_router(health_router)
@@ -38,6 +55,8 @@ app.include_router(enquiries_router)
 app.include_router(missions_router)
 app.include_router(approvals_router)
 app.include_router(audit_router)
+app.include_router(agent_router)
+app.include_router(stitch_router)
 
 
 @app.get("/", tags=["Root"])
@@ -53,10 +72,14 @@ def read_root():
 
 if __name__ == "__main__":
     import uvicorn
+    import os
+
+    port = int(os.environ.get("PORT", str(settings.PORT)))
+    host = os.environ.get("HOST", settings.HOST)
 
     uvicorn.run(
         "main:app",
-        host=settings.HOST,
-        port=settings.PORT,
-        reload=settings.DEBUG,
+        host=host,
+        port=port,
+        reload=settings.DEBUG and settings.ENVIRONMENT == "development",
     )

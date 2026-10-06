@@ -3,7 +3,7 @@ import path from 'path';
 
 const nextConfig: NextConfig = {
   transpilePackages: ['@gatehouse/shared', '@gatehouse/tools', '@gatehouse/agents'],
-  outputFileTracingRoot: path.join(__dirname, '../../'),
+  outputFileTracingRoot: path.resolve(__dirname, '../../'),
   reactStrictMode: true,
   images: {
     remotePatterns: [
@@ -12,6 +12,20 @@ const nextConfig: NextConfig = {
         hostname: 'lh3.googleusercontent.com',
       },
     ],
+  },
+  async rewrites() {
+    const rawApiUrl = process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
+    const apiUrl = rawApiUrl.replace(/\/$/, '');
+    return [
+      {
+        source: '/api/:path*',
+        destination: `${apiUrl}/api/:path*`,
+      },
+      {
+        source: '/health',
+        destination: `${apiUrl}/health`,
+      },
+    ];
   },
 };
 
