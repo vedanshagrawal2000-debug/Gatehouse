@@ -268,6 +268,9 @@ class GeminiStrategicOrchestrator:
         # Gating detection
         halted = (is_stock and ("order" in p_lower or "restock" in p_lower)) or (is_support and "refund" in p_lower) or (is_finance and "invoice" in p_lower)
 
+        # Select active policy based on domain
+        policy_code = "RULE_POL_044" if is_finance else "RULE_POL_012" if is_support else "RULE_POL_093"
+
         phases = [
             {
                 "phaseNumber": 1,
@@ -294,9 +297,9 @@ class GeminiStrategicOrchestrator:
                 "phaseNumber": 4,
                 "phaseName": "Security Perimeter Tripwire Assessment",
                 "responsibleAgent": "Gatehouse Sentinel Kernel (eBPF Shield)",
-                "actionDescription": f"Compare transaction impact against autonomous spending ceiling ($14,000 threshold under RULE POL-093).",
+                "actionDescription": f"Compare transaction impact against autonomous spending ceiling under {policy_code}.",
                 "isAutonomous": not halted,
-                "tripwireCondition": "RULE_POL_093" if halted else None,
+                "tripwireCondition": policy_code if halted else None,
             },
             {
                 "phaseNumber": 5,
@@ -315,7 +318,7 @@ class GeminiStrategicOrchestrator:
             "execution_phases": phases,
             "approval_gating_required": halted,
             "gating_reason": "Total financial impact exceeds autonomous authorization ceiling. Sovereign biometric signature mandatory." if halted else "Action within autonomous policy limits; silent background execution.",
-            "actionable_impact": "$18,500.00 Requisition Staged" if halted else "Routine Inspection",
+            "actionable_impact": "Procurement Requisition Staged" if halted else "Routine Inspection",
         }
 
 

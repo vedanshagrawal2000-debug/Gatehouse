@@ -45,7 +45,10 @@ from database import (
 from services.transaction_scenarios import (
     generate_transaction_approval,
     format_inr,
+    format_dual_currency,
+    build_seed_approvals,
     TRANSACTION_SCENARIOS,
+    USD_INR_RATE,
 )
 
 router = APIRouter(prefix="/api", tags=["Stitch Frontend Integration"])
@@ -150,156 +153,7 @@ STITCH_ENQUIRIES: List[Dict[str, Any]] = [
     },
 ]
 
-STITCH_APPROVALS: List[Dict[str, Any]] = [
-    {
-        "id": "appr-01",
-        "requestId": "#REQ-8841-B",
-        "missionId": "MS-8902-RESTOCK",
-        "agentId": "AGT-02",
-        "agentName": "INVENTORY AGENT",
-        "senderEmail": "inventory.operations@enclave.internal",
-        "recipientEmail": "business.owner@company.internal",
-        "subject": "ACTION REQUIRED: Authorize Supplier Purchase Order #PO-8841-B (₹18,500)",
-        "category": "Procurement & Hardware Replenishment",
-        "isStarred": True,
-        "isRead": False,
-        "title": "CREATE SUPPLIER PURCHASE ORDER // NATIONAL LOGISTICS HUB",
-        "description": "Critical inventory threshold breach: SKU-8892-NEO stock at 2 units (Min: 10) and SKU-1044-CORE stock at 0 units. Automated vendor requisition drafted with approved supplier National Logistics Hub to prevent fulfillment outage across East Coast distribution hubs.",
-        "prompt": "Check inventory, find low-stock products and prepare a restock order.",
-        "amount": 18500,
-        "amountFormatted": "₹18,500 ($34,780.00 USD)",
-        "autonomousLimit": 14000,
-        "varianceAmount": 4500,
-        "currency": "INR",
-        "riskLevel": "CRITICAL",
-        "policyRule": "RULE_POL_093",
-        "enclaveHash": "0x9f4c882a46c3b21",
-        "status": "PENDING",
-        "timestamp": "14:22:07 UTC (3m ago)",
-        "reasoningSteps": [
-            "Queried Warehouse 04 East via SAP Connector. Retrieved 1,420 SKUs telemetry matrix.",
-            "Identified critical depletion on SKU-8892-NEO (2 units remaining; safe min: 10) and SKU-1044-CORE (0 units; stockout breach).",
-            "Structured purchase requisition for National Logistics Hub (VEND-NLH-7701) totaling Subtotal: ₹15,000 + GST (18%): ₹2,700 + Shipping: ₹800.",
-            "Calculated gross transaction value: ₹18,500 ($34,780 USD) (PO: PO-8841-B, Invoice Ref: INV-2026-7701).",
-            "TRIPWIRE ENGAGED: Calculated total PO value of ₹18,500 exceeds autonomous agent purchase threshold (₹14,000 max). Sovereign biometric signature mandatory.",
-        ],
-        "boundTool": "netsuite_erp.draft_po (Vendor: VEND-NLH-7701)",
-        "toolPayload": {
-            "vendor_id": "VEND-NLH-7701",
-            "supplier": "National Logistics Hub",
-            "po_number": "PO-8841-B",
-            "invoice_number": "INV-2026-7701",
-            "transaction_id": "TXN-2026-9101",
-            "subtotal": 15000,
-            "gst": 2700,
-            "shipping": 800,
-            "total_amount": 18500,
-            "currency": "INR",
-            "line_items": [
-                {"sku": "SKU-8892-NEO", "qty": 50, "price": 180.00},
-                {"sku": "SKU-1044-CORE", "qty": 20, "price": 300.00},
-            ],
-            "autonomous_limit": 14000,
-            "variance": 4500,
-            "biometric_gating_tripwire": True,
-        },
-        "lineItems": [
-            {
-                "sku": "SKU-8892-NEO",
-                "description": "High-Bandwidth Transceiver Module 100G",
-                "quantity": 50,
-                "unitPrice": 180.00,
-                "extendedAmount": 9000.00,
-            },
-            {
-                "sku": "SKU-1044-CORE",
-                "description": "Optic Switch Processor (Rev 4)",
-                "quantity": 20,
-                "unitPrice": 300.00,
-                "extendedAmount": 6000.00,
-            },
-        ],
-        "supplier": "National Logistics Hub",
-        "supplierCode": "VEND-NLH-7701",
-        "supplierAddress": "Hub 04, East Logistics Corridor, Sector 18, Gurugram, HR",
-        "poNumber": "PO-8841-B",
-        "invoiceNumber": "INV-2026-7701",
-        "transactionId": "TXN-2026-9101",
-        "subtotal": 15000,
-        "gst": 2700,
-        "shipping": 800,
-        "total": 18500,
-        "subtotalFormatted": "₹15,000",
-        "gstFormatted": "₹2,700",
-        "shippingFormatted": "₹800",
-        "limitFormatted": "₹14,000",
-        "varianceFormatted": "₹4,500",
-    },
-    {
-        "id": "appr-02",
-        "requestId": "#REQ-8839-F",
-        "missionId": "MS-8901-PAYOUT",
-        "agentId": "AGT-03",
-        "agentName": "FINANCE AGENT",
-        "title": "DISPATCH WIRE TRANSFER // HIGH VALUE PAYOUT",
-        "description": "Automated supplier scheduled payment for Tier-1 Cloud Infrastructure contracts exceeding autonomous limit.",
-        "prompt": "Execute scheduled monthly cloud infrastructure provider disbursement.",
-        "amount": 38500,
-        "amountFormatted": "₹3,12,000 ($38,500.00 USD)",
-        "autonomousLimit": 25000,
-        "varianceAmount": 13500,
-        "currency": "USD",
-        "riskLevel": "CRITICAL",
-        "policyRule": "RULE_POL_044",
-        "enclaveHash": "0x9f4ce0082a994c",
-        "status": "PENDING",
-        "timestamp": "14:15:30 UTC (10m ago)",
-        "reasoningSteps": [
-            "Verified contract SLA terms against hash in HashiCorp Vault.",
-            "Generated SWIFT payment payload for routing code CHASUS33.",
-            "TRIPWIRE ENGAGED: Disbursal sum of $38,500 exceeds $25,000 ceiling. Halting for dual-sig confirmation.",
-        ],
-        "boundTool": "swift_highway.wire_transfer (Scope: wire:execute)",
-        "toolPayload": {
-            "beneficiary": "Cloud Provider Infrastructure Inc",
-            "amount": 38500.00,
-            "routing": "CHASUS33",
-            "account": "ACC-9941-88",
-        },
-    },
-    {
-        "id": "appr-03",
-        "requestId": "#REQ-8835-C",
-        "missionId": "MS-8899-SUPPORT",
-        "agentId": "AGT-01",
-        "agentName": "CUSTOMER AGENT",
-        "title": "EXECUTE DIRECT REFUND CREDIT",
-        "description": "Customer satisfaction refund credit for Ticket #9042 damaged parcel.",
-        "prompt": "Authorize $15.00 partial shipping concession for damaged packaging.",
-        "amount": 15,
-        "amountFormatted": "₹1,250 ($15.00 USD)",
-        "autonomousLimit": 50,
-        "varianceAmount": 0,
-        "currency": "USD",
-        "riskLevel": "MODERATE",
-        "policyRule": "RULE_POL_012",
-        "enclaveHash": "0x44a100223910c",
-        "status": "APPROVED",
-        "timestamp": "14:10:02 UTC",
-        "approvedBy": "ADM-01",
-        "approvedAt": "14:10:45 UTC",
-        "reasoningSteps": [
-            "Customer sentiment verified > 95%.",
-            "Value within Level 1 micro-policy ceiling.",
-            "Credit committed to Stripe balance.",
-        ],
-        "boundTool": "stripe.refunds.create (Scope: refunds:write)",
-        "toolPayload": {
-            "customer": "Acmo Corp",
-            "amount": 15.00,
-        },
-    },
-]
+STITCH_APPROVALS: List[Dict[str, Any]] = build_seed_approvals(6)
 
 STITCH_AUDIT_LOGS: List[Dict[str, Any]] = [
     {
@@ -663,7 +517,7 @@ async def run_agent(payload: AgentRunRequest):
         })
 
         halted_for_approval = True
-        raw_logs.append(f"[{now_utc()}] [TRIPWIRE] Invoice sum ($34,800) trips Sovereign Rule POL-093")
+        raw_logs.append(f"[{now_utc()}] [TRIPWIRE] Invoice sum ($34,800) trips Sovereign Rule POL-044")
         raw_logs.append(f"[{now_utc()}] [CRYPTO-ENCLAVE] Generated signed state snapshot hash: 0x9f4ce0082a994c")
 
         req_id = f"#REQ-{random.randint(8800, 8899)}-F"
@@ -683,7 +537,7 @@ async def run_agent(payload: AgentRunRequest):
             "varianceAmount": 9800,
             "currency": "USD",
             "riskLevel": "CRITICAL",
-            "policyRule": "RULE_POL_093",
+            "policyRule": "RULE_POL_044",
             "enclaveHash": f"0x{uuid4().hex[:14]}",
             "status": "PENDING",
             "timestamp": "Just now",
@@ -716,25 +570,6 @@ async def run_agent(payload: AgentRunRequest):
             },
         })
 
-        raw_logs.append(f"[{now_utc()}] [TOOL-RPC] Calling identify_low_stock()")
-        low_stock_items = [i for i in STITCH_INVENTORY if i["status"] in ["low", "depleted"]]
-        events.append({
-            "id": "ev-04",
-            "stepNumber": 4,
-            "title": "Low stock items detected",
-            "timestamp": now_utc(),
-            "status": "DONE",
-            "payloadOutput": {
-                "depleted_count": 2,
-                "items": [
-                    {"sku": "SKU-8892-NEO", "stock": 2, "min": 10},
-                    {"sku": "SKU-1044-CORE", "stock": 0, "min": 8},
-                ],
-            },
-        })
-
-        raw_logs.append(f"[{now_utc()}] [TOOL-RPC] Calling prepare_restock_order()")
-        
         # Select and compute realistic business transaction from the 10 scenarios
         approval_request = generate_transaction_approval(
             mission_id=mission_id,
@@ -743,6 +578,28 @@ async def run_agent(payload: AgentRunRequest):
             agent_name=target_agent["name"],
         )
         po_payload = approval_request["toolPayload"]
+
+        raw_logs.append(f"[{now_utc()}] [TOOL-RPC] Calling identify_low_stock()")
+        events.append({
+            "id": "ev-04",
+            "stepNumber": 4,
+            "title": "Low stock items detected",
+            "timestamp": now_utc(),
+            "status": "DONE",
+            "payloadOutput": {
+                "depleted_count": len(approval_request["lineItems"]),
+                "items": [
+                    {
+                        "sku": it["sku"],
+                        "stock": it.get("currentStock", 0),
+                        "min": it.get("minThreshold", 10),
+                    }
+                    for it in approval_request["lineItems"]
+                ],
+            },
+        })
+
+        raw_logs.append(f"[{now_utc()}] [TOOL-RPC] Calling prepare_restock_order() with {approval_request['supplier']}")
 
         halted_for_approval = True
         raw_logs.append(f"[{now_utc()}] [POLICY-CHECK] Requisition sum ({approval_request['amountFormatted']}) > Autonomous Limit ({approval_request['limitFormatted']})")
@@ -800,9 +657,9 @@ async def run_agent(payload: AgentRunRequest):
         {"step": "05", "title": "Egress Dispatch", "subtitle": "Production ERP", "status": "HALTED_AUTH" if halted_for_approval else "DONE", "timing": "AWAITING SIG" if halted_for_approval else "15ms", "metric": "GATED" if halted_for_approval else "COMMITTED"},
     ]
 
-    supplier_display = approval_request.get("supplier", "National Logistics Hub") if approval_request else "National Logistics Hub"
-    amount_display = approval_request.get("amountFormatted", "₹18,500") if approval_request else "₹18,500"
-    limit_display = approval_request.get("limitFormatted", "₹14,000") if approval_request else "₹14,000"
+    supplier_display = approval_request.get("supplier", "Supplier Requisition") if approval_request else "Supplier Requisition"
+    amount_display = approval_request.get("amountFormatted", "") if approval_request else ""
+    limit_display = approval_request.get("limitFormatted", "Autonomous Limit") if approval_request else "Autonomous Limit"
 
     strategic_plan = {
         "objective": prompt,

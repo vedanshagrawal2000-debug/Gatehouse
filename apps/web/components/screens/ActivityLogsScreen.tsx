@@ -42,7 +42,7 @@ const DEFAULT_AUDIT_RECORDS: AuditRecord[] = [
     id: 'AUD-9018',
     timestamp: '13:51:02 Today',
     agent: 'Finance Agent (AGT-03)',
-    action: 'prepare_restock_order(value: ₹18,500)',
+    action: 'prepare_restock_order(supplier: "Apex Industrial Supplies", value: ₹27,872)',
     decision: 'Approval Required',
     approver: 'Pending Operator Sign-off',
     hash: '0x55d2...ec01',

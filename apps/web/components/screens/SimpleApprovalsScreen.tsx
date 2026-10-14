@@ -453,7 +453,7 @@ export const SimpleApprovalsScreen: React.FC<SimpleApprovalsScreenProps> = ({
                         {activeApproval.amountFormatted || `₹${activeApproval.amount?.toLocaleString()}`}
                       </span>
                       <span className="text-[10px] text-[#666666] font-['JetBrains_Mono']">
-                        Supplier: {activeApproval.supplier || 'National Logistics Hub'}
+                        Supplier: {activeApproval.supplier || 'Supplier Requisition'}{activeApproval.hubRegion ? ` (${activeApproval.hubRegion})` : ''}
                       </span>
                     </div>
 
@@ -462,10 +462,10 @@ export const SimpleApprovalsScreen: React.FC<SimpleApprovalsScreenProps> = ({
                         AUTONOMOUS LIMIT
                       </span>
                       <span className="font-['Space_Grotesk'] text-xl font-bold text-[#111111] mt-0.5">
-                        ₹{activeApproval.autonomousLimit?.toLocaleString() || '14,000'}
+                        {activeApproval.limitFormatted || (activeApproval.autonomousLimit ? `₹${activeApproval.autonomousLimit.toLocaleString()}` : 'Gated')}
                       </span>
                       <span className="text-[10px] text-amber-800 font-['JetBrains_Mono'] font-medium">
-                        Breach Delta: +₹{activeApproval.varianceAmount?.toLocaleString() || '4,500'}
+                        Breach Delta: {activeApproval.varianceFormatted ? `+${activeApproval.varianceFormatted}` : activeApproval.varianceAmount ? `+₹${activeApproval.varianceAmount.toLocaleString()}` : activeApproval.amount && activeApproval.autonomousLimit && activeApproval.amount > activeApproval.autonomousLimit ? `+₹${(activeApproval.amount - activeApproval.autonomousLimit).toLocaleString()}` : '+Ceiling Delta'}
                       </span>
                     </div>
 
@@ -474,7 +474,7 @@ export const SimpleApprovalsScreen: React.FC<SimpleApprovalsScreenProps> = ({
                         SECURITY POLICY
                       </span>
                       <span className="font-['JetBrains_Mono'] text-xs font-bold text-[#111111] mt-1">
-                        {activeApproval.policyRule || 'RULE_POL_093'}
+                        {activeApproval.policyRule || 'RULE_POL_EXEC_GATE'}
                       </span>
                       <span className="text-[10px] text-[#666666]">
                         Risk Level: <strong className="text-[#111111]">{activeApproval.riskLevel || 'CRITICAL'}</strong>
@@ -494,7 +494,8 @@ export const SimpleApprovalsScreen: React.FC<SimpleApprovalsScreenProps> = ({
                             <tr>
                               <th className="py-2.5 px-4">SKU Code</th>
                               <th className="py-2.5 px-4">Description</th>
-                              <th className="py-2.5 px-4 text-center">Qty</th>
+                              <th className="py-2.5 px-4 text-center">Stock Level (Min)</th>
+                              <th className="py-2.5 px-4 text-center">Qty to Order</th>
                               <th className="py-2.5 px-4 text-right">Unit Price</th>
                               <th className="py-2.5 px-4 text-right">Extended</th>
                             </tr>
@@ -504,7 +505,16 @@ export const SimpleApprovalsScreen: React.FC<SimpleApprovalsScreenProps> = ({
                               <tr key={idx} className="hover:bg-[#FAFAFA]">
                                 <td className="py-2.5 px-4 font-['JetBrains_Mono'] text-[#111111] font-medium">{li.sku}</td>
                                 <td className="py-2.5 px-4 text-[#111111]">{li.description}</td>
-                                <td className="py-2.5 px-4 text-center text-[#444444]">{li.quantity}</td>
+                                <td className="py-2.5 px-4 text-center font-['JetBrains_Mono'] text-[#555555]">
+                                  {li.currentStock !== undefined ? (
+                                    <span className={li.currentStock <= (li.minThreshold ?? 0) ? 'text-rose-600 font-bold' : ''}>
+                                      {li.currentStock} units <span className="text-[#888888] font-normal">(Min: {li.minThreshold ?? '-'})</span>
+                                    </span>
+                                  ) : (
+                                    '-'
+                                  )}
+                                </td>
+                                <td className="py-2.5 px-4 text-center text-[#111111] font-semibold">{li.quantity}</td>
                                 <td className="py-2.5 px-4 text-right font-['JetBrains_Mono'] text-[#444444]">₹{li.unitPrice.toLocaleString()}</td>
                                 <td className="py-2.5 px-4 text-right font-['JetBrains_Mono'] font-bold text-[#111111]">₹{li.extendedAmount.toLocaleString()}</td>
                               </tr>
@@ -513,28 +523,28 @@ export const SimpleApprovalsScreen: React.FC<SimpleApprovalsScreenProps> = ({
                           {(activeApproval.subtotalFormatted || activeApproval.gstFormatted || activeApproval.shippingFormatted || activeApproval.subtotal) && (
                             <tfoot className="bg-[#FAFAFA] border-t border-[#E5E5E5] text-xs font-['JetBrains_Mono']">
                               <tr className="border-b border-[#EEEEEE]">
-                                <td colSpan={3} className="py-2 px-4 text-[11px] text-[#666666]">
+                                <td colSpan={4} className="py-2 px-4 text-[11px] text-[#666666]">
                                   {activeApproval.poNumber ? `PO Ref: ${activeApproval.poNumber} | Inv: ${activeApproval.invoiceNumber || 'N/A'}` : ''}
                                 </td>
                                 <td className="py-2 px-4 text-right text-[#666666]">Subtotal:</td>
                                 <td className="py-2 px-4 text-right font-semibold text-[#111111]">{activeApproval.subtotalFormatted || `₹${activeApproval.subtotal?.toLocaleString()}`}</td>
                               </tr>
                               <tr className="border-b border-[#EEEEEE]">
-                                <td colSpan={3} className="py-2 px-4 text-[11px] text-[#666666]">
+                                <td colSpan={4} className="py-2 px-4 text-[11px] text-[#666666]">
                                   {activeApproval.transactionId ? `Txn ID: ${activeApproval.transactionId}` : ''}
                                 </td>
                                 <td className="py-2 px-4 text-right text-[#666666]">GST (18%):</td>
                                 <td className="py-2 px-4 text-right font-semibold text-[#111111]">{activeApproval.gstFormatted || `₹${activeApproval.gst?.toLocaleString()}`}</td>
                               </tr>
                               <tr className="border-b border-[#EEEEEE]">
-                                <td colSpan={3} className="py-2 px-4 text-[11px] text-[#666666]">
+                                <td colSpan={4} className="py-2 px-4 text-[11px] text-[#666666]">
                                   {activeApproval.supplierAddress ? `Ship: ${activeApproval.supplierAddress}` : ''}
                                 </td>
                                 <td className="py-2 px-4 text-right text-[#666666]">Freight & Handling:</td>
                                 <td className="py-2 px-4 text-right font-semibold text-[#111111]">{activeApproval.shippingFormatted || `₹${activeApproval.shipping?.toLocaleString()}`}</td>
                               </tr>
                               <tr className="bg-white border-t-2 border-[#111111]">
-                                <td colSpan={3} className="py-3 px-4 font-bold text-[#111111] font-['Space_Grotesk']">
+                                <td colSpan={4} className="py-3 px-4 font-bold text-[#111111] font-['Space_Grotesk']">
                                   TOTAL COMMITTED PAYOUT
                                 </td>
                                 <td className="py-3 px-4 text-right font-bold text-[#111111] uppercase text-[11px]">Grand Total:</td>

@@ -336,8 +336,8 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
                 {(plan?.executionPhases || [
                   { phaseNumber: 1, phaseName: 'Ingress & Domain Decomposition', responsibleAgent: 'Gatehouse Core', actionDescription: 'Parse business objective AST and allocate specialized company agents', isAutonomous: true },
                   { phaseNumber: 2, phaseName: 'Telemetry & Inventory Scan', responsibleAgent: 'Inventory Agent', actionDescription: 'Audit Warehouse 04 stock and isolate depleted items below safety margin', isAutonomous: true },
-                  { phaseNumber: 3, phaseName: 'Structure Purchase Order', responsibleAgent: 'Finance Agent', actionDescription: `Draft Supplier PO for ${activeRun.approvalRequest?.supplier || 'National Logistics Hub'} (${activeRun.approvalRequest?.amountFormatted || '₹18,500'})`, isAutonomous: true },
-                  { phaseNumber: 4, phaseName: 'Business Owner Gating', responsibleAgent: 'Owner Perimeter', actionDescription: `Order exceeds ${activeRun.approvalRequest?.limitFormatted || '₹14,000'} threshold. Escalate for human authorization`, isAutonomous: false },
+                  { phaseNumber: 3, phaseName: 'Structure Purchase Order', responsibleAgent: 'Finance Agent', actionDescription: `Draft Supplier PO for ${activeRun.approvalRequest?.supplier || 'Supplier Requisition'} (${activeRun.approvalRequest?.amountFormatted || (activeRun.approvalRequest?.amount ? `₹${activeRun.approvalRequest.amount.toLocaleString()}` : 'Requisition Staged')})`, isAutonomous: true },
+                  { phaseNumber: 4, phaseName: 'Business Owner Gating', responsibleAgent: 'Owner Perimeter', actionDescription: `Order exceeds ${activeRun.approvalRequest?.limitFormatted || (activeRun.approvalRequest?.autonomousLimit ? `₹${activeRun.approvalRequest.autonomousLimit.toLocaleString()}` : 'autonomous')} threshold. Escalate for human authorization`, isAutonomous: false },
                   { phaseNumber: 5, phaseName: 'ERP Downstream Commit', responsibleAgent: 'Supabase Engine', actionDescription: 'Commit signed transaction to database and log tamper-evident audit record', isAutonomous: true },
                 ]).map((ph) => {
                   const isCurrentGated = ph.phaseNumber === 4 && (isHalted || !localApproved);
@@ -532,16 +532,16 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
                       Action Staged:
                     </span>
                     <h3 className="font-['Space_Grotesk'] text-base font-bold text-[#111111]">
-                      {activeRun.approvalRequest?.title || 'Create Purchase Order for National Logistics Hub'}
+                      {activeRun.approvalRequest?.title || `Create Purchase Order for ${activeRun.approvalRequest?.supplier || 'Supplier Requisition'}`}
                     </h3>
                     <div className="p-3 rounded-xl bg-white border border-amber-200 flex items-center justify-between">
                       <span className="text-xs text-[#666666] font-['Space_Grotesk']">Order Value / Financial Impact:</span>
                       <span className="text-lg font-bold text-[#111111] font-['Space_Grotesk']">
-                        {activeRun.approvalRequest?.amountFormatted || '₹18,500 ($34,800 USD)'}
+                        {activeRun.approvalRequest?.amountFormatted || (activeRun.approvalRequest?.amount ? `₹${activeRun.approvalRequest.amount.toLocaleString()}` : 'Order Staged')}
                       </span>
                     </div>
                     <p className="text-xs text-[#444444] font-['Space_Grotesk'] leading-relaxed pt-1">
-                      <strong className="text-[#111111]">Owner Gate:</strong> {activeRun.approvalRequest?.description || 'Exceeds autonomous spending ceiling (₹14,000) by ₹4,500. Awaiting your authorization.'}
+                      <strong className="text-[#111111]">Owner Gate:</strong> {activeRun.approvalRequest?.description || (activeRun.approvalRequest?.autonomousLimit && activeRun.approvalRequest?.varianceAmount ? `Exceeds autonomous spending ceiling (₹${activeRun.approvalRequest.autonomousLimit.toLocaleString()}) by ₹${activeRun.approvalRequest.varianceAmount.toLocaleString()}. Awaiting your authorization.` : 'Order exceeds autonomous threshold. Awaiting your authorization.')}
                     </p>
                   </div>
 
@@ -649,7 +649,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
                 <td className="py-3.5 px-6 font-['JetBrains_Mono'] text-amber-900 font-medium">13:51</td>
                 <td className="py-3.5 px-6 font-semibold text-[#111111]">Finance Agent</td>
                 <td className="py-3.5 px-6 text-[#111111] font-medium">
-                  Supplier Purchase Order ({activeRun.approvalRequest?.amountFormatted || '₹18,500'})
+                  Supplier Purchase Order ({activeRun.approvalRequest?.amountFormatted || (activeRun.approvalRequest?.amount ? `₹${activeRun.approvalRequest.amount.toLocaleString()}` : 'Gated')})
                 </td>
                 <td className="py-3.5 px-6">
                   <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-['JetBrains_Mono'] bg-amber-100 text-amber-900 border border-amber-300 font-bold">

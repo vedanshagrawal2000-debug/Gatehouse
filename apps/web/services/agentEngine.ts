@@ -8,7 +8,8 @@ import {
   tool_create_invoice,
   generateClientTransactionApproval,
   APPROVALS_DB,
-  AUDIT_LOGS_DB
+  AUDIT_LOGS_DB,
+  USD_INR_RATE
 } from './businessTools';
 
 export interface AgentRunResult {
@@ -225,7 +226,7 @@ export function executeAgentWorkflow(userPrompt: string): AgentRunResult {
         description: 'Verified milestone billing for Cyberdyne Systems Corp. Total invoice value exceeds the $25,000 autonomous disbursement threshold.',
         prompt: userPrompt,
         amount: 34800,
-        amountFormatted: '$34,800.00 USD (₹28,80,000)',
+        amountFormatted: `$34,800.00 USD (₹${Math.round(34800 * USD_INR_RATE).toLocaleString('en-IN')})`,
         autonomousLimit: 25000,
         varianceAmount: 9800,
         currency: 'USD',
@@ -265,8 +266,11 @@ export function executeAgentWorkflow(userPrompt: string): AgentRunResult {
       payloadOutput: { total_skus: inv.items_scanned || inv.inventory?.length || 4, items: inv.inventory || inv }
     });
 
-    rawKernelLogs.push(`[${timeStr()}] [ANOMALY-DETECTION] 2 SKUs breached minimum safety thresholds`);
-    const lowStockResult = tool_identify_low_stock();
+    // Generate dynamic transaction from realistic scenario catalog
+    newApproval = generateClientTransactionApproval(missionId, userPrompt, targetAgent.code, targetAgent.name);
+    const poResult = newApproval.toolPayload;
+
+    rawKernelLogs.push(`[${timeStr()}] [ANOMALY-DETECTION] ${newApproval.lineItems?.length || 2} SKUs breached minimum safety thresholds`);
     events.push({
       id: 'ev-04',
       stepNumber: 4,
@@ -274,12 +278,15 @@ export function executeAgentWorkflow(userPrompt: string): AgentRunResult {
       timestamp: timeStr(),
       status: 'DONE',
       badge: 'ANOMALY HEURISTIC MATCH',
-      anomalyData: lowStockResult.anomalies
+      anomalyData: newApproval.lineItems?.map(it => ({
+        sku: it.sku,
+        name: it.description,
+        stock: it.currentStock,
+        minThreshold: it.minThreshold,
+        deficit: (it.minThreshold ?? 10) - (it.currentStock ?? 0),
+        action_recommended: (it.currentStock ?? 0) === 0 ? 'EMERGENCY_REQUISITION' : 'SCHEDULED_RESTOCK'
+      }))
     });
-
-    // Generate dynamic transaction from realistic scenario catalog
-    newApproval = generateClientTransactionApproval(missionId, userPrompt, targetAgent.code, targetAgent.name);
-    const poResult = newApproval.toolPayload;
 
     rawKernelLogs.push(`[${timeStr()}] [TOOL-RPC] Structuring purchase order with vendor ${newApproval.supplier}`);
 

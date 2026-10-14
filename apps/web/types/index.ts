@@ -96,6 +96,8 @@ export interface ApprovalRequest {
   lineItems?: Array<{
     sku: string;
     description: string;
+    currentStock?: number;
+    minThreshold?: number;
     quantity: number;
     unitPrice: number;
     extendedAmount: number;
@@ -111,6 +113,7 @@ export interface ApprovalRequest {
   supplier?: string;
   supplierCode?: string;
   supplierAddress?: string;
+  hubRegion?: string;
   poNumber?: string;
   invoiceNumber?: string;
   transactionId?: string;

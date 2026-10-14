@@ -123,11 +123,13 @@ export const OperationsScreen: React.FC<OperationsScreenProps> = ({
           {
             name: 'identify_low_stock',
             input: 'safety_margin: 15, stock_status: "CRITICAL"',
-            output: 'Flagged: SKU-8892-NEO (8 units left) & SKU-1044-CORE (4 units left)',
+            output: req?.lineItems && req.lineItems.length > 0
+              ? `Flagged: ${req.lineItems.map(li => `${li.sku} (${li.currentStock ?? 'low'} units left)`).join(' & ')}`
+              : 'Flagged: Inventory threshold breach detected across active SKUs',
           },
           {
             name: 'prepare_restock_order',
-            input: `skus: ${req?.lineItems?.length || 2}, total_value: ${req?.total || 18500}, supplier: "${req?.supplier || 'National Logistics Hub'}"`,
+            input: `skus: ${req?.lineItems?.length || 2}, total_value: ${req?.total || req?.amount || 0}, supplier: "${req?.supplier || 'Supplier Requisition'}"`,
             output: `Purchase Order #${req?.poNumber || 'PO-8841-B'} structured: Exceeds limit`,
           },
         ],
@@ -139,14 +141,14 @@ export const OperationsScreen: React.FC<OperationsScreenProps> = ({
       icon: 'verified',
       status: 'EVALUATED',
       statusType: 'warning',
-      shortDesc: isCustomer ? 'Rule POL-012: Concession limit exceeded' : isInvoice ? 'Rule POL-044: Ledger limit exceeded' : `Rule POL-093: Limit ${req?.limitFormatted || '₹14,000'} exceeded`,
+      shortDesc: isCustomer ? 'Rule POL-012: Concession limit exceeded' : isInvoice ? 'Rule POL-044: Ledger limit exceeded' : `Rule ${req?.policyRule || 'RULE_POL_093'}: Limit ${req?.limitFormatted || (req?.autonomousLimit ? `₹${req.autonomousLimit.toLocaleString()}` : 'threshold')} exceeded`,
       details: {
         title: 'Enclave Security Policy Gate',
         meta: [
-          { label: 'Enforced Rule', value: isCustomer ? 'RULE_POL_012 (Concession Ceiling)' : isInvoice ? 'RULE_POL_044 (Ledger Ceiling)' : (req?.policyRule ? `${req.policyRule} (Procurement Ceiling)` : 'RULE_POL_093 (Procurement Ceiling)') },
-          { label: 'Autonomous Limit', value: isCustomer ? '$500.00 USD' : isInvoice ? '$25,000.00 USD' : (req?.limitFormatted || '₹14,000') },
-          { label: 'Action Requested', value: isCustomer ? '$1,250.00 USD' : isInvoice ? '$32,000.00 USD' : (req?.amountFormatted || '₹18,500') },
-          { label: 'Policy Variance', value: isCustomer ? '+$750.00 (Breach)' : isInvoice ? '+$7,000.00 (Breach)' : `+${req?.varianceFormatted || '₹4,500'} (Breach)` },
+          { label: 'Enforced Rule', value: isCustomer ? 'RULE_POL_012 (Concession Ceiling)' : isInvoice ? 'RULE_POL_044 (Ledger Ceiling)' : (req?.policyRule ? `${req.policyRule} (Procurement Ceiling)` : 'RULE_POL_EXEC_GATE (Procurement Ceiling)') },
+          { label: 'Autonomous Limit', value: isCustomer ? '$500.00 USD' : isInvoice ? '$25,000.00 USD' : (req?.limitFormatted || (req?.autonomousLimit ? `₹${req.autonomousLimit.toLocaleString()}` : 'Gated')) },
+          { label: 'Action Requested', value: isCustomer ? '$1,250.00 USD' : isInvoice ? '$32,000.00 USD' : (req?.amountFormatted || (req?.amount ? `₹${req.amount.toLocaleString()}` : 'Gated')) },
+          { label: 'Policy Variance', value: isCustomer ? '+$750.00 (Breach)' : isInvoice ? '+$7,000.00 (Breach)' : (req?.varianceFormatted ? `+${req.varianceFormatted} (Breach)` : req?.varianceAmount ? `+₹${req.varianceAmount.toLocaleString()} (Breach)` : 'Breach Detected') },
           { label: 'Verdict', value: 'INTERCEPTED — MANDATORY HUMAN APPROVAL' },
         ],
       },
@@ -474,10 +476,10 @@ export const OperationsScreen: React.FC<OperationsScreenProps> = ({
                     <div className="p-4 rounded-xl bg-white border border-amber-200 flex flex-col gap-1">
                       <span className="text-[10px] font-['JetBrains_Mono'] uppercase text-[#666666]">Proposed Transaction:</span>
                       <span className="font-['Space_Grotesk'] text-base font-bold text-[#111111]">
-                        Create Purchase Order for {req?.supplier || 'National Logistics Hub'}
+                        Create Purchase Order for {req?.supplier || 'Supplier Requisition'}{req?.hubRegion ? ` (${req.hubRegion})` : ''}
                       </span>
                       <span className="font-['Space_Grotesk'] text-2xl font-bold text-[#111111] mt-1">
-                        {req?.amountFormatted || '₹18,500'}
+                        {req?.amountFormatted || (req?.amount ? `₹${req.amount.toLocaleString()}` : '')}
                       </span>
                     </div>
 
@@ -485,7 +487,7 @@ export const OperationsScreen: React.FC<OperationsScreenProps> = ({
                       <div className="flex flex-col gap-1">
                         <span className="text-[10px] font-['JetBrains_Mono'] uppercase text-[#666666]">Why is Owner Approval Needed?</span>
                         <p className="text-xs text-[#444444] font-['Space_Grotesk'] leading-relaxed">
-                          Company policy <code className="text-[#111111] font-['JetBrains_Mono'] font-semibold">{req?.policyRule || 'RULE_POL_093'}</code> sets autonomous spending limit at <strong className="text-[#111111]">{req?.limitFormatted || '₹14,000'}</strong>. This order exceeds the threshold by <strong className="text-amber-900">{req?.varianceFormatted || '₹4,500'}</strong>.
+                          Company policy <code className="text-[#111111] font-['JetBrains_Mono'] font-semibold">{req?.policyRule || 'RULE_POL_EXEC_GATE'}</code> sets autonomous spending limit at <strong className="text-[#111111]">{req?.limitFormatted || (req?.autonomousLimit ? `₹${req.autonomousLimit.toLocaleString()}` : 'threshold')}</strong>. This order exceeds the threshold by <strong className="text-amber-900">{req?.varianceFormatted ? `+${req.varianceFormatted}` : req?.varianceAmount ? `+₹${req.varianceAmount.toLocaleString()}` : 'breach delta'}</strong>.
                         </p>
                       </div>
                     </div>

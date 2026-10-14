@@ -72,7 +72,7 @@ export let ENQUIRIES_DB: CustomerEnquiry[] = [
     customerName: 'Acmo Corp / Operations Division',
     customerEmail: 'ops@acmocorp.internal',
     subject: 'Damaged shipment received in Warehouse 04 (Transceiver modules)',
-    message: 'We received 20x SKU-8892-NEO transceiver units damaged during transit via freight carrier. Need immediate restock replacement or $1,250 refund credit committed to our net-30 ledger.',
+    message: 'We received damaged transceiver units during transit via freight carrier. Need immediate restock replacement or $1,250 refund credit committed to our net-30 ledger.',
     urgency: 'HIGH',
     status: 'PENDING',
     timestamp: '2026-10-03 14:18:12 UTC',
@@ -101,6 +101,13 @@ export let ENQUIRIES_DB: CustomerEnquiry[] = [
   }
 ];
 
+// Central exchange rate configuration (1 USD = 83.5 INR)
+export const USD_INR_RATE = 83.5;
+
+export function convertInrToUsd(inrAmount: number): number {
+  return Math.round((inrAmount / USD_INR_RATE) * 100) / 100;
+}
+
 export function formatINR(amount: number): string {
   const intPart = Math.round(amount);
   const s = intPart.toString();
@@ -116,11 +123,17 @@ export function formatINR(amount: number): string {
   return `₹${groups.join(',')},${last3}`;
 }
 
+export function formatDualCurrency(inrAmount: number): string {
+  const usdAmount = convertInrToUsd(inrAmount);
+  return `${formatINR(inrAmount)} ($${usdAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD)`;
+}
+
 export interface BusinessTransactionScenario {
   id: string;
   supplier: string;
   supplierCode: string;
   supplierAddress: string;
+  hubRegion: string;
   category: string;
   policyRule: string;
   autonomousLimit: number;
@@ -128,6 +141,8 @@ export interface BusinessTransactionScenario {
   lineItems: Array<{
     sku: string;
     description: string;
+    currentStock: number;
+    minThreshold: number;
     quantity: number;
     unitPrice: number;
     extendedAmount: number;
@@ -141,13 +156,14 @@ export const TRANSACTION_SCENARIOS: BusinessTransactionScenario[] = [
     supplier: 'National Logistics Hub',
     supplierCode: 'VEND-NLH-7701',
     supplierAddress: 'Hub 04, East Logistics Corridor, Sector 18, Gurugram, HR',
+    hubRegion: 'Northern Logistics Corridor (WH-04 East), Gurugram',
     category: 'Procurement & Hardware Replenishment',
     policyRule: 'RULE_POL_093',
     autonomousLimit: 14000,
     shippingFee: 800,
     lineItems: [
-      { sku: 'SKU-8892-NEO', description: 'High-Bandwidth Transceiver Module 100G', quantity: 50, unitPrice: 180, extendedAmount: 9000 },
-      { sku: 'SKU-1044-CORE', description: 'Optic Switch Processor (Rev 4)', quantity: 20, unitPrice: 300, extendedAmount: 6000 },
+      { sku: 'SKU-8892-NEO', description: 'High-Bandwidth Transceiver Module 100G', currentStock: 2, minThreshold: 10, quantity: 50, unitPrice: 180, extendedAmount: 9000 },
+      { sku: 'SKU-1044-CORE', description: 'Optic Switch Processor (Rev 4)', currentStock: 0, minThreshold: 5, quantity: 20, unitPrice: 300, extendedAmount: 6000 },
     ],
   },
   // SCENARIO 02 (SCENARIO B)
@@ -156,13 +172,14 @@ export const TRANSACTION_SCENARIOS: BusinessTransactionScenario[] = [
     supplier: 'Apex Industrial Supplies',
     supplierCode: 'VEND-APX-4412',
     supplierAddress: 'Apex Industrial Estate, Block C, Peenya Industrial Area, Bengaluru, KA',
+    hubRegion: 'Southern Tech Hub (BLR-02), Peenya, Bengaluru',
     category: 'Network Infrastructure & Optics',
-    policyRule: 'RULE_POL_093',
+    policyRule: 'RULE_POL_104',
     autonomousLimit: 20000,
     shippingFee: 950,
     lineItems: [
-      { sku: 'SKU-4410-NET', description: 'Industrial Gigabit Network Controller', quantity: 25, unitPrice: 560, extendedAmount: 14000 },
-      { sku: 'SKU-2291-FBR', description: 'Single-Mode Fiber SFP+ Module', quantity: 40, unitPrice: 210, extendedAmount: 8400 },
+      { sku: 'SKU-4410-NET', description: 'Industrial Gigabit Network Controller', currentStock: 3, minThreshold: 15, quantity: 25, unitPrice: 560, extendedAmount: 14000 },
+      { sku: 'SKU-2291-FBR', description: 'Single-Mode Fiber SFP+ Module', currentStock: 5, minThreshold: 25, quantity: 40, unitPrice: 210, extendedAmount: 8400 },
     ],
   },
   // SCENARIO 03 (SCENARIO C)
@@ -171,13 +188,14 @@ export const TRANSACTION_SCENARIOS: BusinessTransactionScenario[] = [
     supplier: 'Metro Components India',
     supplierCode: 'VEND-MCI-3309',
     supplierAddress: 'MIDC Electronic Zone, Mahape, Navi Mumbai, MH',
+    hubRegion: 'Western Gateway (BOM-01), Mahape, Navi Mumbai',
     category: 'Sensor Arrays & Edge Gateways',
-    policyRule: 'RULE_POL_093',
+    policyRule: 'RULE_POL_078',
     autonomousLimit: 25000,
     shippingFee: 1200,
     lineItems: [
-      { sku: 'SKU-5582-SNS', description: 'Precision Thermal & Humidity Sensor Module', quantity: 80, unitPrice: 240, extendedAmount: 19200 },
-      { sku: 'SKU-3301-GTW', description: 'Tactical Edge IoT Gateway Unit', quantity: 15, unitPrice: 720, extendedAmount: 10800 },
+      { sku: 'SKU-5582-SNS', description: 'Precision Thermal & Humidity Sensor Module', currentStock: 8, minThreshold: 40, quantity: 80, unitPrice: 240, extendedAmount: 19200 },
+      { sku: 'SKU-3301-GTW', description: 'Tactical Edge IoT Gateway Unit', currentStock: 1, minThreshold: 8, quantity: 15, unitPrice: 720, extendedAmount: 10800 },
     ],
   },
   // SCENARIO 04
@@ -186,28 +204,30 @@ export const TRANSACTION_SCENARIOS: BusinessTransactionScenario[] = [
     supplier: 'Bharat Telematics Ltd',
     supplierCode: 'VEND-BTL-9921',
     supplierAddress: 'Export Promotion Industrial Park, Whitefield, Bengaluru, KA',
+    hubRegion: 'Whitefield Technology Corridor (BLR-03), Bengaluru',
     category: 'Wireless Telemetry & Antennae',
-    policyRule: 'RULE_POL_093',
+    policyRule: 'RULE_POL_112',
     autonomousLimit: 22000,
     shippingFee: 850,
     lineItems: [
-      { sku: 'SKU-7712-MOD', description: 'Industrial LTE-M Cellular Modem', quantity: 30, unitPrice: 650, extendedAmount: 19500 },
-      { sku: 'SKU-1109-ANT', description: 'High-Gain Omnidirectional Helical Antenna', quantity: 60, unitPrice: 150, extendedAmount: 9000 },
+      { sku: 'SKU-7712-MOD', description: 'Industrial LTE-M Cellular Modem', currentStock: 4, minThreshold: 20, quantity: 30, unitPrice: 650, extendedAmount: 19500 },
+      { sku: 'SKU-1109-ANT', description: 'High-Gain Omnidirectional Helical Antenna', currentStock: 12, minThreshold: 50, quantity: 60, unitPrice: 150, extendedAmount: 9000 },
     ],
   },
   // SCENARIO 05
   {
     id: 'SCEN-05',
-    supplier: 'Cyberdyne Power Systems',
-    supplierCode: 'VEND-CPS-1029',
-    supplierAddress: 'Cyberdyne Tech Park, HITEC City Phase 2, Hyderabad, TS',
+    supplier: 'Delta Power Electronics',
+    supplierCode: 'VEND-DPE-1029',
+    supplierAddress: 'Okhla Industrial Cluster, Phase III, New Delhi, DL',
+    hubRegion: 'Capital Distribution Hub (DEL-01), New Delhi',
     category: 'Power Distribution & Backup',
-    policyRule: 'RULE_POL_093',
-    autonomousLimit: 28000,
-    shippingFee: 1100,
+    policyRule: 'RULE_POL_088',
+    autonomousLimit: 26000,
+    shippingFee: 900,
     lineItems: [
-      { sku: 'SKU-9041-PWR', description: 'Redundant DIN-Rail Power Supply Unit 480W', quantity: 12, unitPrice: 1800, extendedAmount: 21600 },
-      { sku: 'SKU-4402-BAT', description: 'Ultracapacitor Energy Storage Module 24V', quantity: 24, unitPrice: 450, extendedAmount: 10800 },
+      { sku: 'SKU-9904-PWR', description: 'Redundant DIN-Rail Power Supply Unit 48V', currentStock: 2, minThreshold: 12, quantity: 20, unitPrice: 820, extendedAmount: 16400 },
+      { sku: 'SKU-6623-ISO', description: 'Galvanic DC-DC Optical Isolator Pack', currentStock: 6, minThreshold: 30, quantity: 45, unitPrice: 310, extendedAmount: 13950 },
     ],
   },
   // SCENARIO 06
@@ -216,28 +236,30 @@ export const TRANSACTION_SCENARIOS: BusinessTransactionScenario[] = [
     supplier: 'Horizon Optoelectronics',
     supplierCode: 'VEND-HOE-5510',
     supplierAddress: 'Plot 88, Electronic City Phase 1, Hosur Road, Bengaluru, KA',
+    hubRegion: 'Electronic City Optics Yard (BLR-01), Bengaluru',
     category: 'Dense Multiplexers & Passive Optics',
-    policyRule: 'RULE_POL_093',
+    policyRule: 'RULE_POL_135',
     autonomousLimit: 21000,
     shippingFee: 780,
     lineItems: [
-      { sku: 'SKU-6620-WDM', description: 'Dense Wavelength Division Multiplexer (DWDM)', quantity: 35, unitPrice: 420, extendedAmount: 14700 },
-      { sku: 'SKU-8819-SPL', description: 'Planar Lightwave Circuit Optical Splitter 1x16', quantity: 70, unitPrice: 160, extendedAmount: 11200 },
+      { sku: 'SKU-6620-WDM', description: 'Dense Wavelength Division Multiplexer (DWDM)', currentStock: 7, minThreshold: 35, quantity: 35, unitPrice: 420, extendedAmount: 14700 },
+      { sku: 'SKU-8819-SPL', description: 'Planar Lightwave Circuit Optical Splitter 1x16', currentStock: 14, minThreshold: 70, quantity: 70, unitPrice: 160, extendedAmount: 11200 },
     ],
   },
   // SCENARIO 07
   {
     id: 'SCEN-07',
-    supplier: 'Zenith Circuit Technologies',
-    supplierCode: 'VEND-ZCT-8834',
-    supplierAddress: 'SIPCOT Industrial Complex, Sriperumbudur, Tamil Nadu',
+    supplier: 'Zenith Micro Devices',
+    supplierCode: 'VEND-ZMD-8834',
+    supplierAddress: 'Cyber Towers, HITEC City Phase 2, Hyderabad, TS',
+    hubRegion: 'HITEC City Semiconductor Hub (HYD-02), Hyderabad',
     category: 'Embedded Compute & Relays',
-    policyRule: 'RULE_POL_093',
-    autonomousLimit: 26000,
+    policyRule: 'RULE_POL_142',
+    autonomousLimit: 24000,
     shippingFee: 920,
     lineItems: [
-      { sku: 'SKU-3390-MCU', description: 'ARM Cortex-M7 Real-Time Compute Core Board', quantity: 100, unitPrice: 210, extendedAmount: 21000 },
-      { sku: 'SKU-5512-ISO', description: '8-Channel Optoisolated Solid State Relay Pack', quantity: 45, unitPrice: 260, extendedAmount: 11700 },
+      { sku: 'SKU-8821-MCU', description: 'Ultra-Low Power ARM Cortex MCU Board', currentStock: 15, minThreshold: 60, quantity: 100, unitPrice: 140, extendedAmount: 14000 },
+      { sku: 'SKU-3112-CLK', description: 'Temperature-Compensated Crystal Oscillator', currentStock: 10, minThreshold: 40, quantity: 50, unitPrice: 190, extendedAmount: 9500 },
     ],
   },
   // SCENARIO 08
@@ -246,13 +268,14 @@ export const TRANSACTION_SCENARIOS: BusinessTransactionScenario[] = [
     supplier: 'Alpha Quantum Logistics',
     supplierCode: 'VEND-AQL-7123',
     supplierAddress: 'Sector 62, Noida Electronic City, Uttar Pradesh',
+    hubRegion: 'NCR Thermal & Enclosure Depot (NDLS-04), Noida',
     category: 'Thermal & Enclosure Packaging',
-    policyRule: 'RULE_POL_093',
+    policyRule: 'RULE_POL_156',
     autonomousLimit: 24000,
     shippingFee: 1050,
     lineItems: [
-      { sku: 'SKU-2201-ENC', description: 'IP67 Ruggedized Industrial DIN Enclosure', quantity: 18, unitPrice: 1150, extendedAmount: 20700 },
-      { sku: 'SKU-9932-FAN', description: 'High-CFM Dual Ball-Bearing Cooling Array', quantity: 36, unitPrice: 220, extendedAmount: 7920 },
+      { sku: 'SKU-2201-ENC', description: 'IP67 Ruggedized Industrial DIN Enclosure', currentStock: 3, minThreshold: 18, quantity: 18, unitPrice: 1150, extendedAmount: 20700 },
+      { sku: 'SKU-9932-FAN', description: 'High-CFM Dual Ball-Bearing Cooling Array', currentStock: 8, minThreshold: 36, quantity: 36, unitPrice: 220, extendedAmount: 7920 },
     ],
   },
   // SCENARIO 09
@@ -261,13 +284,14 @@ export const TRANSACTION_SCENARIOS: BusinessTransactionScenario[] = [
     supplier: 'Delta Fiber Networks',
     supplierCode: 'VEND-DFN-6641',
     supplierAddress: 'Salt Lake Sector V, Electronic Complex, Kolkata, WB',
+    hubRegion: 'Eastern Interconnect Depot (CCU-01), Salt Lake, Kolkata',
     category: 'Interconnect Cabling & Attenuators',
-    policyRule: 'RULE_POL_093',
+    policyRule: 'RULE_POL_167',
     autonomousLimit: 19000,
     shippingFee: 690,
     lineItems: [
-      { sku: 'SKU-7740-CAB', description: 'Armored Tactical Fiber Patch Cable 10m Duplex', quantity: 120, unitPrice: 140, extendedAmount: 16800 },
-      { sku: 'SKU-3321-ATT', description: 'Variable Optical Inline Attenuator LC/UPC', quantity: 50, unitPrice: 190, extendedAmount: 9500 },
+      { sku: 'SKU-7740-CAB', description: 'Armored Tactical Fiber Patch Cable 10m Duplex', currentStock: 18, minThreshold: 120, quantity: 120, unitPrice: 140, extendedAmount: 16800 },
+      { sku: 'SKU-3321-ATT', description: 'Variable Optical Inline Attenuator LC/UPC', currentStock: 11, minThreshold: 50, quantity: 50, unitPrice: 190, extendedAmount: 9500 },
     ],
   },
   // SCENARIO 10
@@ -276,13 +300,14 @@ export const TRANSACTION_SCENARIOS: BusinessTransactionScenario[] = [
     supplier: 'Titan Switchgear Industries',
     supplierCode: 'VEND-TSI-9018',
     supplierAddress: 'GIDC Industrial Estate, Makarpura, Vadodara, Gujarat',
+    hubRegion: 'Gujarat Industrial Switchgear Yard (BDQ-02), Vadodara',
     category: 'High-Voltage Protection & Switchgear',
-    policyRule: 'RULE_POL_093',
+    policyRule: 'RULE_POL_179',
     autonomousLimit: 30000,
     shippingFee: 1350,
     lineItems: [
-      { sku: 'SKU-1188-BRK', description: 'Industrial Motor Circuit Breaker 63A', quantity: 16, unitPrice: 1250, extendedAmount: 20000 },
-      { sku: 'SKU-4429-SPD', description: 'Type-2 Modular Surge Protection Device', quantity: 30, unitPrice: 480, extendedAmount: 14400 },
+      { sku: 'SKU-1188-BRK', description: 'Industrial Motor Circuit Breaker 63A', currentStock: 2, minThreshold: 16, quantity: 16, unitPrice: 1250, extendedAmount: 20000 },
+      { sku: 'SKU-4429-SPD', description: 'Type-2 Modular Surge Protection Device', currentStock: 5, minThreshold: 30, quantity: 30, unitPrice: 480, extendedAmount: 14400 },
     ],
   },
 ];
@@ -320,6 +345,8 @@ export function generateClientTransactionApproval(
     return {
       sku: it.sku,
       description: it.description,
+      currentStock: it.currentStock,
+      minThreshold: it.minThreshold,
       quantity: it.quantity,
       unitPrice: it.unitPrice,
       extendedAmount: ext,
@@ -332,21 +359,24 @@ export function generateClientTransactionApproval(
   const autonomousLimit = scenario.autonomousLimit;
   const varianceAmount = Math.round((total - autonomousLimit) * 100) / 100;
 
-  const totalFormatted = `${formatINR(total)} ($${Math.round(total * 1.88).toLocaleString()} USD)`;
+  const totalFormatted = formatDualCurrency(total);
   const subtotalFormatted = formatINR(subtotal);
   const gstFormatted = formatINR(gst);
   const shippingFormatted = formatINR(shipping);
   const limitFormatted = formatINR(autonomousLimit);
   const varianceFormatted = formatINR(varianceAmount);
 
-  const skuSummary = lineItems.map(it => `${it.quantity}x ${it.sku}`).join(', ');
-  const description = `Critical inventory threshold breach for ${skuSummary}. Automated vendor requisition drafted with approved supplier ${scenario.supplier} to prevent fulfillment outage.`;
+  const breachesList = lineItems.map(
+    it => `${it.sku} stock at ${it.currentStock} units (Min: ${it.minThreshold})`
+  );
+  const breachesText = breachesList.join(' and ');
+  const description = `Critical inventory threshold breach: ${breachesText}. Automated vendor requisition drafted with approved supplier ${scenario.supplier} (${scenario.hubRegion}) to prevent fulfillment outage.`;
 
   const reasoningSteps = [
-    `Queried Warehouse 04 East via SAP Connector. Flagged depletion on ${skuSummary}.`,
+    `Queried ${scenario.hubRegion} telemetry matrix. Flagged threshold breaches: ${breachesList.join('; ')}.`,
     `Structured purchase requisition for ${scenario.supplier} (${scenario.supplierCode}) totaling Subtotal: ${subtotalFormatted} + GST (18%): ${gstFormatted} + Shipping: ${shippingFormatted}.`,
     `Calculated gross transaction value: ${totalFormatted} (PO: ${poNumber}, Invoice Ref: ${invNumber}).`,
-    `TRIPWIRE ENGAGED: Calculated total PO value of ${formatINR(total)} exceeds autonomous spending threshold (${limitFormatted}) by ${varianceFormatted}. Sovereign biometric signature mandatory.`,
+    `TRIPWIRE ENGAGED: Policy ${scenario.policyRule} triggered. Total PO value ${formatINR(total)} exceeds autonomous spending threshold (${limitFormatted}) by ${varianceFormatted}. Sovereign biometric signature mandatory.`,
   ];
 
   const toolPayload = {
@@ -355,6 +385,7 @@ export function generateClientTransactionApproval(
     transaction_id: txnId,
     vendor_id: scenario.supplierCode,
     supplier: scenario.supplier,
+    hub_region: scenario.hubRegion,
     subtotal,
     gst,
     shipping,
@@ -398,6 +429,7 @@ export function generateClientTransactionApproval(
     supplier: scenario.supplier,
     supplierCode: scenario.supplierCode,
     supplierAddress: scenario.supplierAddress,
+    hubRegion: scenario.hubRegion,
     poNumber,
     invoiceNumber: invNumber,
     transactionId: txnId,
@@ -413,158 +445,130 @@ export function generateClientTransactionApproval(
   };
 }
 
-// Initial Approval Requests in Business Database
-export let APPROVALS_DB: ApprovalRequest[] = [
-  {
-    id: 'appr-01',
-    requestId: '#REQ-8841-B',
-    missionId: 'MS-8902-RESTOCK',
-    agentId: 'AGT-02',
-    agentName: 'INVENTORY AGENT',
-    senderEmail: 'inventory.operations@enclave.internal',
-    recipientEmail: 'business.owner@company.internal',
-    subject: 'ACTION REQUIRED: Authorize Supplier Purchase Order #PO-8841-B (₹18,500)',
-    category: 'Procurement & Hardware Replenishment',
-    isStarred: true,
-    isRead: false,
-    title: 'CREATE SUPPLIER PURCHASE ORDER // NATIONAL LOGISTICS HUB',
-    description: 'Critical inventory threshold breach: SKU-8892-NEO stock at 2 units (Min: 10) and SKU-1044-CORE stock at 0 units. Automated vendor requisition drafted with approved supplier National Logistics Hub to prevent fulfillment outage across East Coast distribution hubs.',
-    prompt: 'Check inventory, find low-stock products and prepare a restock order.',
-    amount: 18500,
-    amountFormatted: '₹18,500 ($34,780.00 USD)',
-    autonomousLimit: 14000,
-    varianceAmount: 4500,
-    currency: 'INR',
-    riskLevel: 'CRITICAL',
-    policyRule: 'RULE_POL_093',
-    enclaveHash: '0x9f4c882a46c3b21',
-    status: 'PENDING',
-    timestamp: '14:22:07 UTC (3m ago)',
-    reasoningSteps: [
-      'Queried Warehouse 04 East via SAP Connector. Retrieved 1,420 SKUs telemetry matrix.',
-      'Identified critical depletion on SKU-8892-NEO (2 units remaining; safe min: 10) and SKU-1044-CORE (0 units; stockout breach).',
-      'Structured purchase requisition for National Logistics Hub (VEND-NLH-7701) totaling Subtotal: ₹15,000 + GST (18%): ₹2,700 + Shipping: ₹800.',
-      'Calculated gross transaction value: ₹18,500 ($34,780 USD) (PO: PO-8841-B, Invoice Ref: INV-2026-7701).',
-      'TRIPWIRE ENGAGED: Calculated total PO value of ₹18,500 exceeds autonomous agent purchase threshold (₹14,000 max). Sovereign biometric signature mandatory.'
-    ],
-    boundTool: 'netsuite_erp.draft_po (Vendor: VEND-NLH-7701)',
-    toolPayload: {
-      vendor_id: 'VEND-NLH-7701',
-      supplier: 'National Logistics Hub',
-      po_number: 'PO-8841-B',
-      invoice_number: 'INV-2026-7701',
-      transaction_id: 'TXN-2026-9101',
-      subtotal: 15000,
-      gst: 2700,
-      shipping: 800,
-      total_amount: 18500,
-      currency: 'INR',
-      line_items: [
-        { sku: 'SKU-8892-NEO', qty: 50, price: 180.00 },
-        { sku: 'SKU-1044-CORE', qty: 20, price: 300.00 }
-      ],
-      autonomous_limit: 14000,
-      variance: 4500,
-      biometric_gating_tripwire: true,
-    },
-    lineItems: [
-      {
-        sku: 'SKU-8892-NEO',
-        description: 'High-Bandwidth Transceiver Module 100G',
-        quantity: 50,
-        unitPrice: 180.00,
-        extendedAmount: 9000.00
-      },
-      {
-        sku: 'SKU-1044-CORE',
-        description: 'Optic Switch Processor (Rev 4)',
-        quantity: 20,
-        unitPrice: 300.00,
-        extendedAmount: 6000.00
-      }
-    ],
-    supplier: 'National Logistics Hub',
-    supplierCode: 'VEND-NLH-7701',
-    supplierAddress: 'Hub 04, East Logistics Corridor, Sector 18, Gurugram, HR',
-    poNumber: 'PO-8841-B',
-    invoiceNumber: 'INV-2026-7701',
-    transactionId: 'TXN-2026-9101',
-    subtotal: 15000,
-    gst: 2700,
-    shipping: 800,
-    total: 18500,
-    subtotalFormatted: '₹15,000',
-    gstFormatted: '₹2,700',
-    shippingFormatted: '₹800',
-    limitFormatted: '₹14,000',
-    varianceFormatted: '₹4,500',
-  },
-  {
-    id: 'appr-02',
-    requestId: '#REQ-8839-F',
-    missionId: 'MS-8901-PAYOUT',
-    agentId: 'AGT-03',
-    agentName: 'FINANCE AGENT',
-    title: 'DISPATCH WIRE TRANSFER // HIGH VALUE PAYOUT',
-    description: 'Automated supplier scheduled payment for Tier-1 Cloud Infrastructure contracts exceeding autonomous limit.',
-    prompt: 'Execute scheduled monthly cloud infrastructure provider disbursement.',
-    amount: 38500,
-    amountFormatted: '₹3,12,000 ($38,500.00 USD)',
-    autonomousLimit: 25000,
-    varianceAmount: 13500,
-    currency: 'USD',
-    riskLevel: 'CRITICAL',
-    policyRule: 'RULE_POL_044',
-    enclaveHash: '0x9f4ce0082a994c',
-    status: 'PENDING',
-    timestamp: '14:15:30 UTC (10m ago)',
-    reasoningSteps: [
-      'Verified contract SLA terms against hash in HashiCorp Vault.',
-      'Generated SWIFT payment payload for routing code CHASUS33.',
-      'TRIPWIRE ENGAGED: Disbursal sum of $38,500 exceeds $25,000 ceiling. Halting for dual-sig confirmation.'
-    ],
-    boundTool: 'swift_highway.wire_transfer (Scope: wire:execute)',
-    toolPayload: {
-      beneficiary: 'Cloud Provider Infrastructure Inc',
-      amount: 38500.00,
-      routing: 'CHASUS33',
-      account: 'ACC-9941-88'
-    }
-  },
-  {
-    id: 'appr-03',
-    requestId: '#REQ-8835-C',
-    missionId: 'MS-8899-SUPPORT',
-    agentId: 'AGT-01',
-    agentName: 'CUSTOMER AGENT',
-    title: 'EXECUTE DIRECT REFUND CREDIT',
-    description: 'Customer satisfaction refund credit for Ticket #9042 damaged parcel.',
-    prompt: 'Authorize $15.00 partial shipping concession for damaged packaging.',
-    amount: 15,
-    amountFormatted: '₹1,250 ($15.00 USD)',
-    autonomousLimit: 50,
-    varianceAmount: 0,
-    currency: 'USD',
-    riskLevel: 'MODERATE',
-    policyRule: 'RULE_POL_012',
-    enclaveHash: '0x44a100223910c',
-    status: 'APPROVED',
-    timestamp: '14:10:02 UTC',
-    approvedBy: 'ADM-01',
-    approvedAt: '14:10:45 UTC',
-    reasoningSteps: [
-      'Customer sentiment verified > 95%.',
-      'Value within Level 1 micro-policy ceiling.',
-      'Credit committed to Stripe balance.'
-    ],
-    boundTool: 'stripe.refunds.create (Scope: refunds:write)',
-    toolPayload: {
-      customer: 'Acmo Corp',
-      amount: 15.00
-    }
-  }
-];
+export function buildSeedApprovals(count: number = 6): ApprovalRequest[] {
+  const seedList: ApprovalRequest[] = [];
+  for (let idx = 0; idx < Math.min(count, TRANSACTION_SCENARIOS.length); idx++) {
+    const scen = TRANSACTION_SCENARIOS[idx];
+    const poNum = `PO-${8841 + idx}-${String.fromCharCode(65 + idx)}`;
+    const reqId = `#REQ-${8841 + idx}-${String.fromCharCode(65 + idx)}`;
+    const txnId = `TXN-2026-${9101 + idx}`;
+    const invNum = `INV-2026-${7701 + idx}`;
+    const apprId = `appr-0${idx + 1}`;
 
+    let subtotal = 0;
+    const lineItems = scen.lineItems.map(it => {
+      const ext = it.quantity * it.unitPrice;
+      subtotal += ext;
+      return {
+        sku: it.sku,
+        description: it.description,
+        currentStock: it.currentStock,
+        minThreshold: it.minThreshold,
+        quantity: it.quantity,
+        unitPrice: it.unitPrice,
+        extendedAmount: ext,
+      };
+    });
+
+    const gst = Math.round(subtotal * 0.18 * 100) / 100;
+    const shipping = scen.shippingFee;
+    const total = subtotal + gst + shipping;
+    const autonomousLimit = scen.autonomousLimit;
+    const varianceAmount = Math.round((total - autonomousLimit) * 100) / 100;
+
+    const totalFormatted = formatDualCurrency(total);
+    const subtotalFormatted = formatINR(subtotal);
+    const gstFormatted = formatINR(gst);
+    const shippingFormatted = formatINR(shipping);
+    const limitFormatted = formatINR(autonomousLimit);
+    const varianceFormatted = formatINR(varianceAmount);
+
+    const breachesList = lineItems.map(
+      it => `${it.sku} stock at ${it.currentStock} units (Min: ${it.minThreshold})`
+    );
+    const breachesText = breachesList.join(' and ');
+    const description = `Critical inventory threshold breach: ${breachesText}. Automated vendor requisition drafted with approved supplier ${scen.supplier} (${scen.hubRegion}) to prevent fulfillment outage.`;
+
+    const reasoningSteps = [
+      `Queried ${scen.hubRegion} telemetry matrix. Flagged threshold breaches: ${breachesList.join('; ')}.`,
+      `Structured purchase requisition for ${scen.supplier} (${scen.supplierCode}) totaling Subtotal: ${subtotalFormatted} + GST (18%): ${gstFormatted} + Shipping: ${shippingFormatted}.`,
+      `Calculated gross transaction value: ${totalFormatted} (PO: ${poNum}, Invoice Ref: ${invNum}).`,
+      `TRIPWIRE ENGAGED: Policy ${scen.policyRule} triggered. Total PO value of ${formatINR(total)} exceeds autonomous spending threshold (${limitFormatted}) by ${varianceFormatted}. Sovereign biometric signature mandatory.`,
+    ];
+
+    const toolPayload = {
+      po_number: poNum,
+      invoice_number: invNum,
+      transaction_id: txnId,
+      vendor_id: scen.supplierCode,
+      supplier: scen.supplier,
+      hub_region: scen.hubRegion,
+      subtotal,
+      gst,
+      shipping,
+      total_amount: total,
+      currency: 'INR',
+      autonomous_limit: autonomousLimit,
+      variance: varianceAmount,
+      line_items: lineItems,
+      biometric_gating_tripwire: true,
+    };
+
+    seedList.push({
+      id: apprId,
+      requestId: reqId,
+      missionId: `MS-${8902 + idx}-RESTOCK`,
+      agentId: 'AGT-02',
+      agentName: 'INVENTORY AGENT',
+      senderEmail: 'inventory.operations@enclave.internal',
+      recipientEmail: 'business.owner@company.internal',
+      subject: `ACTION REQUIRED: Authorize Supplier Purchase Order #${poNum} (${formatINR(total)})`,
+      category: scen.category,
+      isStarred: idx < 2,
+      isRead: false,
+      title: `CREATE SUPPLIER PURCHASE ORDER // ${scen.supplier.toUpperCase()}`,
+      description,
+      prompt: 'Check low-stock products and prepare a restock order.',
+      amount: total,
+      amountFormatted: totalFormatted,
+      autonomousLimit,
+      varianceAmount,
+      currency: 'INR',
+      riskLevel: 'CRITICAL',
+      policyRule: scen.policyRule,
+      enclaveHash: '0x' + Array.from({ length: 16 }, () => Math.floor(Math.random() * 16).toString(16)).join(''),
+      status: 'PENDING',
+      timestamp: `${14 - idx}:22:${15 + idx * 3} UTC (${idx * 3 + 2}m ago)`,
+      reasoningSteps,
+      boundTool: `netsuite_erp.draft_po (Vendor: ${scen.supplierCode})`,
+      toolPayload,
+      lineItems,
+      supplier: scen.supplier,
+      supplierCode: scen.supplierCode,
+      supplierAddress: scen.supplierAddress,
+      hubRegion: scen.hubRegion,
+      poNumber: poNum,
+      invoiceNumber: invNum,
+      transactionId: txnId,
+      subtotal,
+      gst,
+      shipping,
+      total,
+      subtotalFormatted,
+      gstFormatted,
+      shippingFormatted,
+      limitFormatted,
+      varianceFormatted,
+    });
+  }
+
+  return seedList;
+}
+
+// Initial Approval Requests in Business Database
+export let APPROVALS_DB: ApprovalRequest[] = buildSeedApprovals(6);
+
+// Initial Audit Logs in System
 export let AUDIT_LOGS_DB: AuditLogEntry[] = [
   {
     id: 'LOG-1001',
@@ -575,7 +579,7 @@ export let AUDIT_LOGS_DB: AuditLogEntry[] = [
     status: 'GATED',
     latencyMs: 12,
     hash: '0x9f4c882a...b21',
-    details: 'Rule POL-093 tripped: amount ($34,800.00) exceeds autonomous ceiling ($25,000.00)'
+    details: 'Rule POL-093 tripped: amount exceeds autonomous spending ceiling ($14,000.00)'
   },
   {
     id: 'LOG-1002',
@@ -586,7 +590,7 @@ export let AUDIT_LOGS_DB: AuditLogEntry[] = [
     status: '200 OK',
     latencyMs: 18,
     hash: '0x44a10992...e11',
-    details: 'Queried stock for WH_04_EAST. 1,420 SKUs scanned, 2 depleted anomalies flagged.'
+    details: 'Queried stock for WH_04_EAST. 1,420 SKUs scanned, threshold breach anomalies flagged.'
   },
   {
     id: 'LOG-1003',
@@ -601,66 +605,67 @@ export let AUDIT_LOGS_DB: AuditLogEntry[] = [
   },
   {
     id: 'LOG-1004',
-    timestamp: '14:15:00.812 UTC',
+    timestamp: '14:15:30.881 UTC',
     agentId: 'AGT-03',
-    action: 'KEY_REQUEST: request_ephemeral_token',
-    target: 'HashiCorp Vault',
-    status: 'AUDITED',
-    latencyMs: 9,
-    hash: '0x22c4a919...01e',
-    details: 'Issued 300s TTL token for ADM-01 role via AES-256-GCM enclave tunnel.'
+    action: 'POLICY_INTERRUPT',
+    target: 'Gatehouse Supervisor Node',
+    status: 'GATED',
+    latencyMs: 14,
+    hash: '0x9f4ce008...94c',
+    details: 'Rule POL-044 tripped: disbursement exceeds autonomous ceiling ($25,000.00)'
   },
   {
     id: 'LOG-1005',
-    timestamp: '14:02:11.200 UTC',
-    agentId: 'AGT-02',
-    action: 'CACHE_SYNC: fetch_reorder_point',
-    target: 'Oracle ERP Cloud',
+    timestamp: '14:10:45.190 UTC',
+    agentId: 'AGT-01',
+    action: 'BIOMETRIC_SIGN_CONFIRM',
+    target: 'Enclave State Commit',
     status: '200 OK',
-    latencyMs: 12,
-    hash: '0x12c988aa...fa3',
-    details: 'Sync Batch #441 committed 1.4KB payload for Warehouse 04 reorder calculations.'
+    latencyMs: 250,
+    hash: '0x44a10022...10c',
+    details: 'Operator authorized refund concession for Ticket #9042.'
   }
 ];
 
-export const AGENT_REGISTRY: AgentSpec[] = [
+// Active Agents Configuration
+export const AGENTS_CONFIG: AgentSpec[] = [
   {
     id: 'agt-01',
     code: 'AGT-01',
     name: 'CUSTOMER AGENT',
     status: 'ONLINE',
     statusBadge: 'ONLINE',
-    description: 'Handles customer enquiries and prepares context-aware customer responses autonomously.',
-    assignedTools: ['Zendesk Enterprise', 'Intercom API', 'Slack Ingress', 'Vector Base (Faiss)'],
+    description: 'Ingests inbound customer tickets, checks CRM databases, and drafts empathetic responses under governed rules.',
+    assignedTools: ['Zendesk Bridge v2', 'CRM Context Hook', 'Stripe Refunds API', 'Slack Notifier'],
     tasksExec: 142,
-    latencyMs: 18,
-    vramAlloc: '420 MB',
+    latencyMs: 28,
+    vramAlloc: '380 MB',
     lastInference: {
-      summary: 'Drafted refund resolution for Ticket #9042 — customer satisfaction confidence 98.4%.',
-      timeAgo: '42s AGO',
-      confidence: '98.4%'
+      summary: 'Drafted dispute concession for Ticket #9042 — Policy check passed.',
+      timeAgo: '4m AGO',
+      confidence: '98.8%'
     },
-    gatingPolicy: 'GATING: MICRO-POLICY',
-    enclave: 'gVisor Sandbox (#SB-880)',
+    gatingPolicy: 'GATING: AUTO-REFUND <$500',
+    enclave: 'gVisor Sandbox (#SB-881)',
     model: 'gemini-3.8-flash'
   },
   {
     id: 'agt-02',
     code: 'AGT-02',
     name: 'INVENTORY AGENT',
-    status: 'SYNC ACTIVE',
-    statusBadge: 'SYNC ACTIVE',
-    description: 'Checks inventory levels, autonomously detects low stock, and dispatches restock purchase orders.',
-    assignedTools: ['SAP S/4HANA', 'Oracle ERP Cloud', 'Warehouse IoT', 'WMS Egress'],
+    status: 'ONLINE',
+    statusBadge: 'ONLINE',
+    description: 'Monitors inventory telemetry across warehouses, flags depleted SKUs, and drafts vendor restock purchase orders.',
+    assignedTools: ['SAP S/4HANA Connector', 'NetSuite Inventory v4', 'Barcode/RFID Pipeline', 'Procurement DB'],
     tasksExec: 89,
-    latencyMs: 8,
-    vramAlloc: '610 MB',
+    latencyMs: 34,
+    vramAlloc: '420 MB',
     lastInference: {
-      summary: 'Triggered reorder calculation for SKU_8892 (Stock: 2 units, Threshold: 10 units) in Warehouse 04.',
+      summary: 'Flagged SKU depletion in Warehouse 04 East — Restock PO structured.',
       timeAgo: '3m AGO',
       confidence: '99.9%'
     },
-    gatingPolicy: 'GATING: AUTO-PO <$10K',
+    gatingPolicy: 'GATING: AUTO-PO <$14K',
     enclave: 'gVisor Sandbox (#SB-882)',
     model: 'gemini-3.8-flash'
   },
@@ -676,7 +681,7 @@ export const AGENT_REGISTRY: AgentSpec[] = [
     latencyMs: 19,
     vramAlloc: '540 MB',
     lastInference: {
-      summary: 'Drafted PO #8841-B Wire ($34,800.00) — Halted at Gatehouse biometric perimeter awaiting Sovereign Sig.',
+      summary: 'Drafted Supplier Wire Transfer — Halted at Gatehouse biometric perimeter awaiting Sovereign Sig.',
       timeAgo: '1m AGO',
       confidence: '100%'
     },
@@ -703,76 +708,76 @@ export function tool_get_inventory(params?: { warehouse_id?: string; category?: 
 }
 
 // TOOL 2: identify_low_stock
-export function tool_identify_low_stock(params?: { buffer_percentage?: number }) {
-  const buffer = params?.buffer_percentage ?? 0.20;
-  const flagged = INVENTORY_DB.filter(item => item.stock <= (item.minThreshold * (1 + buffer)));
-  
+export function tool_identify_low_stock(threshold?: number) {
+  const anomalies = INVENTORY_DB.filter(item => {
+    if (threshold !== undefined) return item.stock <= threshold;
+    return item.stock <= item.minThreshold;
+  });
+
   return {
     status: 200,
     timestamp: new Date().toISOString(),
-    total_flagged: flagged.length,
-    flagged_skus: flagged.map(f => f.sku),
-    anomalies: flagged.map(item => ({
-      sku: item.sku,
-      name: item.name,
-      stock: item.stock,
-      min_threshold: item.minThreshold,
-      deficit: Math.max(0, item.minThreshold - item.stock),
-      recommended_reorder_qty: Math.max(item.minThreshold * 2, 20),
-      urgency: item.stock === 0 ? 'CRITICAL_DEPLETED' : 'ELEVATED_DEPLETION',
-      supplier_id: item.supplierId,
-      unit_price: item.unitPrice
+    total_anomalies: anomalies.length,
+    critical_breaches: anomalies.filter(a => a.stock === 0).length,
+    anomalies: anomalies.map(a => ({
+      sku: a.sku,
+      name: a.name,
+      stock: a.stock,
+      minThreshold: a.minThreshold,
+      deficit: a.minThreshold - a.stock,
+      location: a.location,
+      action_recommended: a.stock === 0 ? 'EMERGENCY_REQUISITION' : 'SCHEDULED_RESTOCK'
     }))
   };
 }
 
 // TOOL 3: prepare_restock_order
-export function tool_prepare_restock_order(params: {
-  vendor_id?: string;
-  line_items?: Array<{ sku: string; quantity: number }>;
-}) {
+export function tool_prepare_restock_order(items?: Array<{ sku: string; quantity: number }>) {
   const defaultItems = [
     { sku: 'SKU-8892-NEO', quantity: 50 },
     { sku: 'SKU-1044-CORE', quantity: 20 }
   ];
 
-  const itemsToOrder = params?.line_items && params.line_items.length > 0 ? params.line_items : defaultItems;
-  
-  let calculatedTotal = 0;
-  const detailedLines = itemsToOrder.map(req => {
-    const item = INVENTORY_DB.find(i => i.sku === req.sku);
-    const unitPrice = item ? item.unitPrice : 250.00;
-    const ext = unitPrice * req.quantity;
-    calculatedTotal += ext;
+  const targetItems = items || defaultItems;
+  let subtotal = 0;
+
+  const itemDetails = targetItems.map(t => {
+    const inv = INVENTORY_DB.find(i => i.sku === t.sku);
+    const unitPrice = inv ? inv.unitPrice : 200.00;
+    const lineTotal = unitPrice * t.quantity;
+    subtotal += lineTotal;
     return {
-      sku: req.sku,
-      description: item ? item.name : 'Component Restock Requisition',
-      quantity: req.quantity,
-      unit_price: unitPrice,
-      extended_amount: ext
+      sku: t.sku,
+      name: inv ? inv.name : 'Component',
+      quantity: t.quantity,
+      unitPrice,
+      total: lineTotal
     };
   });
 
-  const poNumber = `PO-${Math.floor(1000 + Math.random() * 9000)}-B`;
-  const autonomousThreshold = 14000; // ₹14,000 / $10,000 limit
-  const requiresApproval = calculatedTotal > autonomousThreshold;
+  const autonomousCeiling = 14000.00;
+  const tripsThreshold = subtotal > autonomousCeiling;
 
-  const result = {
-    po_number: poNumber,
-    vendor_id: params?.vendor_id || 'VEND-LOGISTICS-77',
-    facility_id: 'WH_04_EAST',
-    line_items: detailedLines,
-    total_amount: calculatedTotal,
-    currency: 'USD',
-    autonomous_limit: autonomousThreshold,
-    variance: requiresApproval ? calculatedTotal - autonomousThreshold : 0,
-    status: requiresApproval ? 'DRAFT_PENDING_SIG' : 'COMMITTED_AUTO',
-    biometric_gating_tripwire: requiresApproval,
-    reason: requiresApproval ? 'EXCEEDS_AUTONOMOUS_LIMIT_25K' : 'WITHIN_POLICY_LIMITS',
-    enclave_hash: '0x' + Array.from({length: 16}, () => Math.floor(Math.random() * 16).toString(16)).join('')
+  return {
+    status: 200,
+    timestamp: new Date().toISOString(),
+    order_id: `PO-${Date.now().toString().slice(-6)}`,
+    vendor: {
+      id: 'VEND-NLH-7701',
+      name: 'National Logistics Hub',
+      hub: 'Northern Logistics Corridor (WH-04 East), Gurugram',
+      sla_days: 2
+    },
+    items: itemDetails,
+    subtotal,
+    currency: 'INR',
+    autonomous_limit: autonomousCeiling,
+    delta: tripsThreshold ? subtotal - autonomousCeiling : 0,
+    biometric_gating_tripwire: tripsThreshold,
+    gating_reason: tripsThreshold
+      ? `Requisition value (${formatINR(subtotal)}) exceeds autonomous spending ceiling (${formatINR(autonomousCeiling)}). Mandating human sign-off.`
+      : null
   };
-
-  return result;
 }
 
 // TOOL 4: get_customer_enquiries
@@ -787,7 +792,7 @@ export function tool_get_customer_enquiries(params?: { urgency?: string; status?
   return {
     status: 200,
     timestamp: new Date().toISOString(),
-    count: list.length,
+    total_enquiries: list.length,
     enquiries: list
   };
 }
@@ -798,19 +803,23 @@ export function tool_draft_customer_reply(params: {
   proposed_resolution: string;
   refund_amount?: number;
 }) {
-  const enquiry = ENQUIRIES_DB.find(e => e.id === params.ticket_id || e.ticketNumber.includes(params.ticket_id));
-  const refund = params.refund_amount ?? 0;
-  const requiresApproval = refund > 500;
+  const refund = params.refund_amount || 0;
+  const autonomousLimit = 500.00;
+  const tripsThreshold = refund > autonomousLimit;
 
   return {
     status: 200,
+    timestamp: new Date().toISOString(),
     ticket_id: params.ticket_id,
-    customer: enquiry ? enquiry.customerName : 'Client',
-    drafted_response: `Dear Customer,\n\nRegarding your enquiry, we have reviewed your ticket. ${params.proposed_resolution}\n${refund > 0 ? `A refund credit in the amount of $${refund.toFixed(2)} has been staged to your ledger account.` : ''}\n\nSincerely,\nGATEHOUSE Tactical Operations Core`,
-    satisfaction_confidence: 0.984,
+    resolution_draft: params.proposed_resolution,
     refund_amount: refund,
-    biometric_gating_tripwire: requiresApproval,
-    reason: requiresApproval ? 'REFUND_EXCEEDS_500_LIMIT' : 'PRE_APPROVED_MICRO_POLICY'
+    currency: 'USD',
+    autonomous_limit: autonomousLimit,
+    delta: tripsThreshold ? refund - autonomousLimit : 0,
+    biometric_gating_tripwire: tripsThreshold,
+    gating_reason: tripsThreshold
+      ? `Refund concession ($${refund.toFixed(2)}) exceeds autonomous threshold ($${autonomousLimit.toFixed(2)}). Escalate to business owner.`
+      : null
   };
 }
 
@@ -818,23 +827,28 @@ export function tool_draft_customer_reply(params: {
 export function tool_create_invoice(params: {
   customer_name: string;
   line_items: Array<{ description: string; amount: number }>;
-  currency?: string;
-  due_date?: string;
 }) {
-  const total = params.line_items.reduce((acc, curr) => acc + curr.amount, 0);
-  const requiresApproval = total > 25000;
-  const invNumber = `INV-${Math.floor(10000 + Math.random() * 90000)}`;
+  const subtotal = params.line_items.reduce((acc, curr) => acc + curr.amount, 0);
+  const tax = subtotal * 0.0875;
+  const total = subtotal + tax;
+  const autonomousCeiling = 25000.00;
+  const tripsThreshold = total > autonomousCeiling;
 
   return {
-    invoice_number: invNumber,
-    customer_name: params.customer_name,
-    date: new Date().toISOString().split('T')[0],
-    due_date: params.due_date || 'Net-30',
+    status: 200,
+    timestamp: new Date().toISOString(),
+    invoice_number: `INV-${Date.now().toString().slice(-6)}`,
+    customer: params.customer_name,
     line_items: params.line_items,
-    total_amount: total,
-    currency: params.currency || 'USD',
-    status: requiresApproval ? 'LOCKED_AWAITING_APPROVAL' : 'ISSUED',
-    biometric_gating_tripwire: requiresApproval,
-    reason: requiresApproval ? 'INVOICE_EXCEEDS_25K_DUAL_SIG' : 'STANDARD_ISSUANCE'
+    subtotal,
+    tax,
+    total,
+    currency: 'USD',
+    autonomous_limit: autonomousCeiling,
+    delta: tripsThreshold ? total - autonomousCeiling : 0,
+    biometric_gating_tripwire: tripsThreshold,
+    gating_reason: tripsThreshold
+      ? `Invoice value ($${total.toFixed(2)}) exceeds autonomous billing ceiling ($${autonomousCeiling.toFixed(2)}). Mandatory owner sign-off.`
+      : null
   };
 }
