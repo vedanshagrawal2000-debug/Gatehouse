@@ -29,9 +29,23 @@ from database import (
     DEMO_MISSIONS,
     db_get_agents,
     db_get_approval_requests,
+    db_insert_approval_request,
+    db_authorize_approval,
+    db_reject_approval,
     db_get_audit_logs,
+    db_insert_audit_log,
     db_get_customer_enquiries,
     db_get_inventory,
+    DatabaseDegradedError,
+    DuplicateExecutionError,
+    ApprovalNotFoundError,
+    InvalidApprovalStateError,
+    is_database_configured,
+)
+from services.transaction_scenarios import (
+    generate_transaction_approval,
+    format_inr,
+    TRANSACTION_SCENARIOS,
 )
 
 router = APIRouter(prefix="/api", tags=["Stitch Frontend Integration"])
@@ -143,14 +157,20 @@ STITCH_APPROVALS: List[Dict[str, Any]] = [
         "missionId": "MS-8902-RESTOCK",
         "agentId": "AGT-02",
         "agentName": "INVENTORY AGENT",
-        "title": "CREATE SUPPLIER PURCHASE ORDER",
-        "description": "Critical inventory threshold breach: SKU-8892-NEO stock at 2 units (Min: 10) and SKU-1044-CORE stock at 0 units. Automated vendor requisition drafted to prevent fulfillment outage across East Coast distribution hubs.",
+        "senderEmail": "inventory.operations@enclave.internal",
+        "recipientEmail": "business.owner@company.internal",
+        "subject": "ACTION REQUIRED: Authorize Supplier Purchase Order #PO-8841-B (₹18,500)",
+        "category": "Procurement & Hardware Replenishment",
+        "isStarred": True,
+        "isRead": False,
+        "title": "CREATE SUPPLIER PURCHASE ORDER // NATIONAL LOGISTICS HUB",
+        "description": "Critical inventory threshold breach: SKU-8892-NEO stock at 2 units (Min: 10) and SKU-1044-CORE stock at 0 units. Automated vendor requisition drafted with approved supplier National Logistics Hub to prevent fulfillment outage across East Coast distribution hubs.",
         "prompt": "Check inventory, find low-stock products and prepare a restock order.",
         "amount": 18500,
-        "amountFormatted": "₹18,500 ($34,800.00 USD)",
+        "amountFormatted": "₹18,500 ($34,780.00 USD)",
         "autonomousLimit": 14000,
         "varianceAmount": 4500,
-        "currency": "USD",
+        "currency": "INR",
         "riskLevel": "CRITICAL",
         "policyRule": "RULE_POL_093",
         "enclaveHash": "0x9f4c882a46c3b21",
@@ -159,28 +179,37 @@ STITCH_APPROVALS: List[Dict[str, Any]] = [
         "reasoningSteps": [
             "Queried Warehouse 04 East via SAP Connector. Retrieved 1,420 SKUs telemetry matrix.",
             "Identified critical depletion on SKU-8892-NEO (2 units remaining; safe min: 10) and SKU-1044-CORE (0 units; stockout breach).",
-            "Calculated safety buffer restock: 50 units for transceiver module and 20 units for processor using wholesale SLA terms with Vendor-77.",
-            "Staged purchase requisition draft #PO-8841-B in sandbox enclave for dry-run validation.",
-            "TRIPWIRE ENGAGED: Calculated total PO value of ₹18,500 ($34,800 USD) exceeds autonomous agent purchase threshold (₹14,000 max). Sovereign biometric signature mandatory.",
+            "Structured purchase requisition for National Logistics Hub (VEND-NLH-7701) totaling Subtotal: ₹15,000 + GST (18%): ₹2,700 + Shipping: ₹800.",
+            "Calculated gross transaction value: ₹18,500 ($34,780 USD) (PO: PO-8841-B, Invoice Ref: INV-2026-7701).",
+            "TRIPWIRE ENGAGED: Calculated total PO value of ₹18,500 exceeds autonomous agent purchase threshold (₹14,000 max). Sovereign biometric signature mandatory.",
         ],
-        "boundTool": "netsuite_erp.draft_po (Scope: ledger:write)",
+        "boundTool": "netsuite_erp.draft_po (Vendor: VEND-NLH-7701)",
         "toolPayload": {
-            "vendor_id": "VEND-LOGISTICS-77",
+            "vendor_id": "VEND-NLH-7701",
+            "supplier": "National Logistics Hub",
             "po_number": "PO-8841-B",
+            "invoice_number": "INV-2026-7701",
+            "transaction_id": "TXN-2026-9101",
+            "subtotal": 15000,
+            "gst": 2700,
+            "shipping": 800,
+            "total_amount": 18500,
+            "currency": "INR",
             "line_items": [
-                {"sku": "SKU-8892-NEO", "qty": 50, "price": 250.00},
+                {"sku": "SKU-8892-NEO", "qty": 50, "price": 180.00},
                 {"sku": "SKU-1044-CORE", "qty": 20, "price": 300.00},
             ],
-            "total_amount": 18500.00,
-            "currency": "USD",
+            "autonomous_limit": 14000,
+            "variance": 4500,
+            "biometric_gating_tripwire": True,
         },
         "lineItems": [
             {
                 "sku": "SKU-8892-NEO",
                 "description": "High-Bandwidth Transceiver Module 100G",
                 "quantity": 50,
-                "unitPrice": 250.00,
-                "extendedAmount": 12500.00,
+                "unitPrice": 180.00,
+                "extendedAmount": 9000.00,
             },
             {
                 "sku": "SKU-1044-CORE",
@@ -190,6 +219,21 @@ STITCH_APPROVALS: List[Dict[str, Any]] = [
                 "extendedAmount": 6000.00,
             },
         ],
+        "supplier": "National Logistics Hub",
+        "supplierCode": "VEND-NLH-7701",
+        "supplierAddress": "Hub 04, East Logistics Corridor, Sector 18, Gurugram, HR",
+        "poNumber": "PO-8841-B",
+        "invoiceNumber": "INV-2026-7701",
+        "transactionId": "TXN-2026-9101",
+        "subtotal": 15000,
+        "gst": 2700,
+        "shipping": 800,
+        "total": 18500,
+        "subtotalFormatted": "₹15,000",
+        "gstFormatted": "₹2,700",
+        "shippingFormatted": "₹800",
+        "limitFormatted": "₹14,000",
+        "varianceFormatted": "₹4,500",
     },
     {
         "id": "appr-02",
@@ -444,21 +488,30 @@ async def run_agent(payload: AgentRunRequest):
             "id": "agt-01",
             "code": "AGT-01",
             "name": "CUSTOMER AGENT",
+            "role": "Autonomous Dispute & Ticket Routing",
+            "assignedTools": ["crm_resolve_dispute", "draft_reply"],
             "enclave": "gVisor Sandbox (#SB-880)",
+            "clearance": "SOVEREIGN-L5",
         }
     elif is_invoice:
         target_agent = {
             "id": "agt-03",
             "code": "AGT-03",
             "name": "FINANCE AGENT",
+            "role": "Ledger Reconciliation & Gated Payouts",
+            "assignedTools": ["swift_highway.wire_transfer", "create_invoice"],
             "enclave": "gVisor Sandbox (#SB-883)",
+            "clearance": "SOVEREIGN-L5",
         }
     else:
         target_agent = {
             "id": "agt-02",
             "code": "AGT-02",
             "name": "INVENTORY AGENT",
+            "role": "Predictive Supply Chain & PO Dispatch",
+            "assignedTools": ["netsuite_erp.draft_po", "query_stock_levels"],
             "enclave": "gVisor Sandbox (#SB-882)",
+            "clearance": "SOVEREIGN-L5",
         }
 
     mission_suffix = "SUPPORT" if is_customer else "FINANCE" if is_invoice else "RESTOCK"
@@ -681,74 +734,28 @@ async def run_agent(payload: AgentRunRequest):
         })
 
         raw_logs.append(f"[{now_utc()}] [TOOL-RPC] Calling prepare_restock_order()")
-        po_payload = {
-            "status": "STAGED",
-            "po_number": f"PO-{random.randint(8000, 8999)}-B",
-            "vendor_id": "VEND-LOGISTICS-77",
-            "line_items": [
-                {"sku": "SKU-8892-NEO", "quantity": 50, "unitPrice": 250.00, "extendedAmount": 12500.00},
-                {"sku": "SKU-1044-CORE", "quantity": 20, "unitPrice": 300.00, "extendedAmount": 6000.00},
-            ],
-            "total_amount": 18500.00,
-            "biometric_gating_tripwire": True,
-            "gating_reason": "Total purchase order value ($18,500.00) exceeds autonomous threshold ($14,000.00)",
-        }
+        
+        # Select and compute realistic business transaction from the 10 scenarios
+        approval_request = generate_transaction_approval(
+            mission_id=mission_id,
+            prompt=prompt,
+            agent_code=target_agent["code"],
+            agent_name=target_agent["name"],
+        )
+        po_payload = approval_request["toolPayload"]
 
         halted_for_approval = True
-        raw_logs.append(f"[{now_utc()}] [POLICY-CHECK] Requisition sum ($18,500) > Autonomous Limit ($14,000)")
-        raw_logs.append(f"[{now_utc()}] [PERIMETER-HALT] Tripwire POL-093 engaged. Execution paused.")
+        raw_logs.append(f"[{now_utc()}] [POLICY-CHECK] Requisition sum ({approval_request['amountFormatted']}) > Autonomous Limit ({approval_request['limitFormatted']})")
+        raw_logs.append(f"[{now_utc()}] [PERIMETER-HALT] Tripwire {approval_request['policyRule']} engaged. Transaction {approval_request['transactionId']} for {approval_request['supplier']} halted.")
 
-        req_id = f"#REQ-{random.randint(8800, 8899)}-B"
-        appr_id = f"appr-{int(time.time() * 1000)}"
-        approval_request = {
-            "id": appr_id,
-            "requestId": req_id,
-            "missionId": mission_id,
-            "agentId": target_agent["code"],
-            "agentName": target_agent["name"],
-            "title": "CREATE SUPPLIER PURCHASE ORDER",
-            "description": "Critical inventory threshold breach in WH-04. Automated vendor requisition drafted to prevent fulfillment outage.",
-            "prompt": prompt,
-            "amount": 18500,
-            "amountFormatted": "₹18,500 ($34,800.00 USD)",
-            "autonomousLimit": 14000,
-            "varianceAmount": 4500,
-            "currency": "USD",
-            "riskLevel": "CRITICAL",
-            "policyRule": "RULE_POL_093",
-            "enclaveHash": f"0x{uuid4().hex[:15]}",
-            "status": "PENDING",
-            "timestamp": "Just now",
-            "reasoningSteps": [
-                "Queried Warehouse 04 East via SAP Connector. Retrieved 1,420 SKUs telemetry matrix.",
-                "Identified critical depletion on SKU-8892-NEO (2 units) and SKU-1044-CORE (0 units).",
-                "Calculated safety buffer restock: 50 units for transceiver module and 20 units for processor.",
-                "TRIPWIRE ENGAGED: Total PO value ($18,500) exceeds autonomous purchase threshold ($14,000). Sovereign biometric signature mandatory.",
-            ],
-            "boundTool": "netsuite_erp.draft_po (Scope: ledger:write)",
-            "toolPayload": po_payload,
-            "lineItems": [
-                {
-                    "sku": "SKU-8892-NEO",
-                    "description": "High-Bandwidth Transceiver Module 100G",
-                    "quantity": 50,
-                    "unitPrice": 250.00,
-                    "extendedAmount": 12500.00,
-                },
-                {
-                    "sku": "SKU-1044-CORE",
-                    "description": "Optic Switch Processor (Rev 4)",
-                    "quantity": 20,
-                    "unitPrice": 300.00,
-                    "extendedAmount": 6000.00,
-                },
-            ],
-        }
         STITCH_APPROVALS.insert(0, approval_request)
+        db_insert_approval_request(approval_request)
         final_output = po_payload
 
     # Append Tripwire Halt event
     if halted_for_approval and approval_request:
+        delta_val = approval_request.get("varianceFormatted") or f"+₹{approval_request.get('varianceAmount', 0):,.2f}"
+        limit_val = approval_request.get("limitFormatted") or f"₹{approval_request.get('autonomousLimit', 0)}"
         events.append({
             "id": "ev-05",
             "stepNumber": 5,
@@ -760,22 +767,28 @@ async def run_agent(payload: AgentRunRequest):
             "gatingAlert": {
                 "tripwire": approval_request["policyRule"],
                 "reason": approval_request["description"],
-                "delta": f"+${approval_request['varianceAmount']:,.2f} over limit",
-                "poId": approval_request["requestId"],
+                "delta": f"+{delta_val} over limit",
+                "poId": approval_request.get("poNumber", approval_request["requestId"]),
             },
         })
         # Add to audit log
-        STITCH_AUDIT_LOGS.insert(0, {
+        supplier_name = approval_request.get("supplier", "Vendor")
+        po_num = approval_request.get("poNumber", approval_request["requestId"])
+        txn_id = approval_request.get("transactionId", "TXN-01")
+        audit_entry = {
             "id": f"LOG-{random.randint(2000, 9999)}",
             "timestamp": now_utc(),
-            "agentId": target_agent["code"],
+            "actor_type": "agent",
+            "actor_id": target_agent["code"],
             "action": "POLICY_INTERRUPT",
-            "target": "Gatehouse Supervisor Node",
+            "target": f"Gatehouse Supervisor // {supplier_name}",
             "status": "GATED",
             "latencyMs": 14,
-            "hash": approval_request["enclaveHash"],
-            "details": f"Rule {approval_request['policyRule']} tripped: {approval_request['description']}",
-        })
+            "payload_hash": approval_request["enclaveHash"],
+            "details": f"Rule {approval_request['policyRule']} tripped: {supplier_name} PO #{po_num} (Txn: {txn_id}, Value: {approval_request['amountFormatted']}) exceeds threshold {limit_val}.",
+        }
+        db_insert_audit_log(audit_entry)
+        STITCH_AUDIT_LOGS.insert(0, audit_entry)
 
     elapsed_ms = int((time.time() - start_time) * 1000)
 
@@ -783,9 +796,41 @@ async def run_agent(payload: AgentRunRequest):
         {"step": "01", "title": "Ingress & Parse", "subtitle": "Webhook JSON", "status": "DONE", "timing": "12ms", "metric": "100% OK"},
         {"step": "02", "title": "Kernel Dispatch", "subtitle": target_agent["enclave"], "status": "DONE", "timing": "44ms", "metric": "0.99 CONF"},
         {"step": "03", "title": "Tool Execution", "subtitle": "Sandbox Enclave", "status": "DONE", "timing": "128ms", "metric": "RPC OK"},
-        {"step": "04", "title": "Tripwire Gating", "subtitle": "eBPF Shield", "status": "HALTED_AUTH" if halted_for_approval else "DONE", "timing": "18ms", "metric": "POL-093"},
+        {"step": "04", "title": "Tripwire Gating", "subtitle": "eBPF Shield", "status": "HALTED_AUTH" if halted_for_approval else "DONE", "timing": "18ms", "metric": approval_request["policyRule"] if approval_request else "POL-093"},
         {"step": "05", "title": "Egress Dispatch", "subtitle": "Production ERP", "status": "HALTED_AUTH" if halted_for_approval else "DONE", "timing": "AWAITING SIG" if halted_for_approval else "15ms", "metric": "GATED" if halted_for_approval else "COMMITTED"},
     ]
+
+    supplier_display = approval_request.get("supplier", "National Logistics Hub") if approval_request else "National Logistics Hub"
+    amount_display = approval_request.get("amountFormatted", "₹18,500") if approval_request else "₹18,500"
+    limit_display = approval_request.get("limitFormatted", "₹14,000") if approval_request else "₹14,000"
+
+    strategic_plan = {
+        "objective": prompt,
+        "strategicRationale": f"Deconstructed directive for {target_agent['name']}. Enforcing perimeter tripwire for financial requisitions.",
+        "allocatedAgents": [
+            {
+                "agentId": target_agent.get("id", "agt-02"),
+                "agentCode": target_agent.get("code", "AGT-02"),
+                "agentName": target_agent.get("name", "INVENTORY AGENT"),
+                "role": target_agent.get("role", "Autonomous Operations Node"),
+                "assignedTask": f"Execute domain workflow for: \"{prompt}\"",
+                "boundTools": target_agent.get("assignedTools", ["netsuite_erp.draft_po"]),
+                "enclave": target_agent.get("enclave", "gVisor Sandbox (#SB-882)"),
+                "clearance": target_agent.get("clearance", "SOVEREIGN-L5"),
+            }
+        ],
+        "executionPhases": [
+            {"phaseNumber": 1, "phaseName": "Ingress & Domain Decomposition", "responsibleAgent": "Gatehouse Core", "actionDescription": "Parse business objective AST and allocate specialized company agents", "isAutonomous": True},
+            {"phaseNumber": 2, "phaseName": "Telemetry & Inventory Scan", "responsibleAgent": "Inventory Agent", "actionDescription": "Audit Warehouse 04 stock and isolate depleted items below safety margin", "isAutonomous": True},
+            {"phaseNumber": 3, "phaseName": "Structure Purchase Order", "responsibleAgent": "Finance Agent", "actionDescription": f"Draft Supplier PO for {supplier_display} ({amount_display})", "isAutonomous": True},
+            {"phaseNumber": 4, "phaseName": "Business Owner Gating", "responsibleAgent": "Owner Perimeter", "actionDescription": f"Order exceeds {limit_display} threshold. Escalate for human authorization", "isAutonomous": False},
+            {"phaseNumber": 5, "phaseName": "ERP Downstream Commit", "responsibleAgent": "Supabase Engine", "actionDescription": "Commit signed transaction to database and log tamper-evident audit record", "isAutonomous": True},
+        ],
+        "riskTier": "CRITICAL" if halted_for_approval else "LOW",
+        "estimatedCost": approval_request.get("amount") if approval_request else 0,
+        "approvalGatingRequired": halted_for_approval,
+        "gatingReason": approval_request.get("description") if approval_request else None,
+    }
 
     return {
         "missionId": mission_id,
@@ -797,6 +842,7 @@ async def run_agent(payload: AgentRunRequest):
         "rawKernelLogs": raw_logs,
         "haltedForApproval": halted_for_approval,
         "approvalRequest": approval_request,
+        "strategicPlan": strategic_plan,
         "finalOutput": final_output,
         "elapsedTimeMs": elapsed_ms,
     }
@@ -804,74 +850,81 @@ async def run_agent(payload: AgentRunRequest):
 
 @router.get("/approvals")
 async def get_approvals():
-    """Returns human approval requests for the command post."""
-    return {"approvals": STITCH_APPROVALS}
+    """Returns human approval requests for the command post from persistent storage (with fallback)."""
+    approvals = db_get_approval_requests()
+    return {"approvals": approvals}
 
 
 @router.post("/approvals/authorize")
 async def authorize_approval(payload: AuthorizeRequest):
-    """Authorizes a gated approval request with biometric signature."""
-    approval = next((a for a in STITCH_APPROVALS if a.get("id") == payload.id or a.get("requestId") == payload.id), None)
-    if not approval:
-        raise HTTPException(status_code=404, detail="Approval request not found")
+    """
+    Authorizes a gated approval request with sovereign biometric signature.
+    Prevents execution when persistent database storage is unavailable (DEGRADED).
+    Guarantees single execution and immutability.
+    """
+    if not payload.id or not str(payload.id).strip():
+        raise HTTPException(status_code=400, detail="Approval request ID is required.")
 
-    approval["status"] = "APPROVED"
-    approval["approvedBy"] = payload.authorized_by or "ADM-01 [SOVEREIGN-L5]"
-    approval["approvedAt"] = datetime.now(timezone.utc).isoformat()
-
-    # Commit to audit log
-    now_utc = datetime.now(timezone.utc).strftime("%H:%M:%S.%f")[:-3] + " UTC"
-    sig = payload.key_signature or approval.get("enclaveHash", f"0x{uuid4().hex[:12]}")
-    STITCH_AUDIT_LOGS.insert(0, {
-        "id": f"LOG-{random.randint(1000, 9999)}",
-        "timestamp": now_utc,
-        "agentId": approval.get("agentId", "AGT-02"),
-        "action": "SOVEREIGN_AUTHORIZATION_COMMIT",
-        "target": approval.get("boundTool", "gatehouse.perimeter"),
-        "status": "APPROVED",
-        "latencyMs": 14,
-        "hash": sig,
-        "details": f"Sovereign signature confirmed for {approval.get('requestId')}. Amount {approval.get('amountFormatted', '$18,500')} released for egress dispatch.",
-    })
-
-    return {"success": True, "approval": approval}
+    try:
+        approval = db_authorize_approval(
+            approval_id=str(payload.id).strip(),
+            operator_id=payload.authorized_by or "Business Owner // Sovereign L5",
+            key_signature=payload.key_signature,
+        )
+        return {"success": True, "approval": approval}
+    except DatabaseDegradedError as dbe:
+        raise HTTPException(status_code=503, detail=str(dbe))
+    except DuplicateExecutionError as dee:
+        raise HTTPException(status_code=409, detail=str(dee))
+    except InvalidApprovalStateError as iase:
+        raise HTTPException(status_code=400, detail=str(iase))
+    except ApprovalNotFoundError as anfe:
+        raise HTTPException(status_code=404, detail=str(anfe))
+    except Exception as ex:
+        logger.error(f"Error authorizing approval: {ex}")
+        raise HTTPException(status_code=500, detail=f"Internal authorization error: {str(ex)}")
 
 
 @router.post("/approvals/reject")
 async def reject_approval(payload: RejectRequest):
-    """Rejects a gated approval request."""
-    approval = next((a for a in STITCH_APPROVALS if a.get("id") == payload.id or a.get("requestId") == payload.id), None)
-    if not approval:
-        raise HTTPException(status_code=404, detail="Approval request not found")
+    """
+    Rejects a gated approval request.
+    Prevents decision recording when persistent database storage is unavailable (DEGRADED).
+    """
+    if not payload.id or not str(payload.id).strip():
+        raise HTTPException(status_code=400, detail="Approval request ID is required.")
 
-    approval["status"] = "REJECTED"
-
-    now_utc = datetime.now(timezone.utc).strftime("%H:%M:%S.%f")[:-3] + " UTC"
-    STITCH_AUDIT_LOGS.insert(0, {
-        "id": f"LOG-{random.randint(1000, 9999)}",
-        "timestamp": now_utc,
-        "agentId": approval.get("agentId", "AGT-02"),
-        "action": "SOVEREIGN_OVERRIDE_PURGE",
-        "target": approval.get("boundTool", "gatehouse.perimeter"),
-        "status": "REJECTED",
-        "latencyMs": 9,
-        "hash": approval.get("enclaveHash", f"0x{uuid4().hex[:12]}"),
-        "details": f"Operator rejected {approval.get('requestId')}. Intent purged from sandbox enclave. Reason: {payload.reason or 'Operator override'}",
-    })
-
-    return {"success": True, "approval": approval}
+    try:
+        approval = db_reject_approval(
+            approval_id=str(payload.id).strip(),
+            reason=payload.reason or "Rejected by Business Owner in Command Post",
+        )
+        return {"success": True, "approval": approval}
+    except DatabaseDegradedError as dbe:
+        raise HTTPException(status_code=503, detail=str(dbe))
+    except DuplicateExecutionError as dee:
+        raise HTTPException(status_code=409, detail=str(dee))
+    except InvalidApprovalStateError as iase:
+        raise HTTPException(status_code=400, detail=str(iase))
+    except ApprovalNotFoundError as anfe:
+        raise HTTPException(status_code=404, detail=str(anfe))
+    except Exception as ex:
+        logger.error(f"Error rejecting approval: {ex}")
+        raise HTTPException(status_code=500, detail=f"Internal rejection error: {str(ex)}")
 
 
 @router.get("/agents")
 async def get_agents():
     """Returns AI agent roster."""
-    return {"agents": STITCH_AGENTS}
+    agents = db_get_agents()
+    return {"agents": agents if agents else STITCH_AGENTS}
 
 
 @router.get("/audit-logs")
 async def get_audit_logs():
-    """Returns immutable audit logs."""
-    return {"logs": STITCH_AUDIT_LOGS}
+    """Returns immutable cryptographic audit logs from persistent storage."""
+    logs = db_get_audit_logs()
+    return {"logs": logs}
 
 
 @router.get("/tools/inventory")
@@ -906,14 +959,22 @@ async def get_low_stock(payload: LowStockRequest):
 @router.post("/tools/prepare-restock")
 async def prepare_restock(payload: PrepareRestockRequest):
     """Prepares restock order. Halts at perimeter for approval."""
+    tx = generate_transaction_approval()
     return {
         "status": 202,
         "timestamp": datetime.now(timezone.utc).isoformat(),
-        "vendor_id": payload.vendor_id or "VEND-LOGISTICS-77",
-        "po_number": f"PO-{random.randint(8000, 8999)}-B",
+        "vendor_id": payload.vendor_id or tx.get("supplierCode", "VEND-LOGISTICS-77"),
+        "supplier": tx.get("supplier"),
+        "po_number": tx.get("poNumber"),
+        "invoice_number": tx.get("invoiceNumber"),
+        "transaction_id": tx.get("transactionId"),
         "biometric_gating_tripwire": True,
-        "total_amount": 18500.00,
-        "message": "Sensitive restock order halted at Gatehouse perimeter awaiting operator authorization.",
+        "subtotal": tx.get("subtotal"),
+        "gst": tx.get("gst"),
+        "shipping": tx.get("shipping"),
+        "total_amount": tx.get("total"),
+        "total_formatted": tx.get("amountFormatted"),
+        "message": f"Sensitive restock order for {tx.get('supplier')} ({tx.get('amountFormatted')}) halted at Gatehouse perimeter awaiting operator authorization.",
     }
 
 

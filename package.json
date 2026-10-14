@@ -16,6 +16,8 @@
     "build:web": "npm run build --workspace=@gatehouse/web",
     "build:api": "npm run build --workspace=@gatehouse/api",
     "build": "npm run build --workspaces --if-present",
+    "start": "npm run start --workspace=@gatehouse/web",
+    "start:web": "npm run start --workspace=@gatehouse/web",
     "db:verify": "node scripts/verify-database.js",
     "db:migrate": "python apps/api/database/migrate.py",
     "lint": "npm run lint --workspaces --if-present",

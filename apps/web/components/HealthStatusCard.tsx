@@ -30,23 +30,23 @@ export function HealthStatusCard() {
   const isConnected = health !== null && !error;
 
   return (
-    <div className="relative bg-surface-container-low border border-border-default reticle-box p-space-md shadow-2xl">
+    <div className="bg-white border border-[#E5E5E5] rounded-xl p-6 shadow-sm flex flex-col gap-5">
       {/* Header telemetry stripe */}
-      <div className="flex items-center justify-between pb-space-sm border-b border-border-default/60 mb-space-md">
-        <div className="flex items-center gap-space-xs">
-          <span className={`w-2 h-2 rounded-full ${isConnected ? 'bg-secondary animate-pulse' : 'bg-primary-container'}`} />
-          <span className="font-mono text-xs uppercase tracking-wider text-on-surface font-semibold">
-            TELEMETRY LINK // BACKEND HEALTH VERIFICATION
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-[#E5E5E5] gap-2">
+        <div className="flex items-center gap-2.5">
+          <span className={`w-2 h-2 rounded-full ${isConnected ? 'bg-emerald-500' : 'bg-rose-500'}`} />
+          <span className="font-mono text-xs uppercase tracking-wider text-[#111111] font-semibold">
+            INFRASTRUCTURE TELEMETRY // BACKEND HEALTH VERIFICATION
           </span>
         </div>
-        <div className="flex items-center gap-space-sm">
-          <span className="font-mono text-[11px] text-on-surface-variant">
+        <div className="flex items-center gap-3">
+          <span className="font-mono text-[11px] text-[#888888]">
             CHECKED: {lastChecked || 'CONNECTING...'}
           </span>
           <button
             onClick={checkStatus}
             disabled={loading}
-            className="px-2.5 py-1 text-xs font-mono uppercase tracking-wider bg-surface-container hover:bg-surface-container-high border border-border-default text-primary hover:text-white transition-all disabled:opacity-50"
+            className="px-3 py-1 text-xs font-mono uppercase tracking-wider bg-white hover:bg-[#F5F5F5] border border-[#E5E5E5] text-[#111111] rounded-md transition-all disabled:opacity-50 cursor-pointer shadow-subtle"
           >
             {loading ? 'PINGING...' : 'RE-PING'}
           </button>
@@ -54,65 +54,58 @@ export function HealthStatusCard() {
       </div>
 
       {/* Main Connection Status Display */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-space-sm mb-space-md">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Core Gateway Status */}
-        <div className="bg-surface-container p-space-sm border border-border-default">
-          <div className="text-[11px] font-mono text-on-surface-variant uppercase">API GATEWAY</div>
-          <div className="flex items-center gap-1.5 mt-1">
-            <span className={`text-base font-bold font-headline uppercase ${isConnected ? 'text-secondary' : 'text-primary'}`}>
+        <div className="bg-[#FAFAFA] p-4 rounded-lg border border-[#E5E5E5] flex flex-col justify-between">
+          <div className="text-[11px] font-mono text-[#666666] uppercase tracking-wider">API GATEWAY</div>
+          <div className="flex items-center gap-2 mt-2">
+            <span className={`w-2 h-2 rounded-full ${isConnected ? 'bg-emerald-500' : 'bg-rose-500'}`} />
+            <span className="text-sm font-bold text-[#111111] uppercase tracking-tight">
               {isConnected ? 'ONLINE // READY' : 'CONNECTION FAILED'}
             </span>
           </div>
-          <div className="text-[10px] font-mono text-on-surface-variant/80 mt-1">
+          <div className="text-[10px] font-mono text-[#888888] mt-2">
             LATENCY: {latency !== null ? `${latency}ms` : 'TIMEOUT'}
           </div>
         </div>
 
         {/* Gemini API Status */}
-        <div className="bg-surface-container p-space-sm border border-border-default">
-          <div className="text-[11px] font-mono text-on-surface-variant uppercase">GEMINI API ENGINE</div>
-          <div className="flex items-center gap-1.5 mt-1">
-            <span
-              className={`text-base font-bold font-headline uppercase ${
-                health?.services.gemini.status === 'healthy'
-                  ? 'text-secondary'
-                  : 'text-tertiary'
-              }`}
-            >
+        <div className="bg-[#FAFAFA] p-4 rounded-lg border border-[#E5E5E5] flex flex-col justify-between">
+          <div className="text-[11px] font-mono text-[#666666] uppercase tracking-wider">GEMINI API ENGINE</div>
+          <div className="flex items-center gap-2 mt-2">
+            <span className={`w-2 h-2 rounded-full ${health?.services.gemini.status === 'healthy' ? 'bg-emerald-500' : 'bg-amber-500'}`} />
+            <span className="text-sm font-bold text-[#111111] uppercase tracking-tight">
               {health?.services.gemini.configured ? 'ACTIVE // INITIALIZED' : 'CONFIG REQUIRED'}
             </span>
           </div>
-          <div className="text-[10px] font-mono text-on-surface-variant/80 mt-1 truncate">
+          <div className="text-[10px] font-mono text-[#888888] mt-2 truncate">
             MODEL: {health?.services.gemini.model || 'gemini-2.5-flash'}
           </div>
         </div>
 
         {/* Supabase Status */}
-        <div className="bg-surface-container p-space-sm border border-border-default">
-          <div className="text-[11px] font-mono text-on-surface-variant uppercase">SUPABASE POSTGRESQL</div>
-          <div className="flex items-center gap-1.5 mt-1">
-            <span
-              className={`text-base font-bold font-headline uppercase ${
-                health?.services.database.status === 'healthy'
-                  ? 'text-secondary'
-                  : 'text-tertiary'
-              }`}
-            >
-              {health?.services.database.configured ? 'CONNECTED' : 'TEMPLATE READY'}
+        <div className="bg-[#FAFAFA] p-4 rounded-lg border border-[#E5E5E5] flex flex-col justify-between">
+          <div className="text-[11px] font-mono text-[#666666] uppercase tracking-wider">SUPABASE POSTGRESQL</div>
+          <div className="flex items-center gap-2 mt-2">
+            <span className={`w-2 h-2 rounded-full ${health?.services.database.status === 'healthy' ? 'bg-emerald-500' : 'bg-amber-500'}`} />
+            <span className="text-sm font-bold text-[#111111] uppercase tracking-tight">
+              {health?.services.database.configured ? 'CONNECTED' : 'DEGRADED / READY'}
             </span>
           </div>
-          <div className="text-[10px] font-mono text-on-surface-variant/80 mt-1">
+          <div className="text-[10px] font-mono text-[#888888] mt-2">
             PROVIDER: PostgreSQL
           </div>
         </div>
 
         {/* Kernel Telemetry */}
-        <div className="bg-surface-container p-space-sm border border-border-default">
-          <div className="text-[11px] font-mono text-on-surface-variant uppercase">SYSTEM CLEARANCE</div>
-          <div className="text-base font-bold font-headline text-on-surface mt-1">
-            {health?.metrics?.clearance || 'SOVEREIGN-L5'}
+        <div className="bg-[#FAFAFA] p-4 rounded-lg border border-[#E5E5E5] flex flex-col justify-between">
+          <div className="text-[11px] font-mono text-[#666666] uppercase tracking-wider">SYSTEM CLEARANCE</div>
+          <div className="flex items-center gap-2 mt-2">
+            <span className="text-sm font-bold text-[#111111]">
+              {health?.metrics?.clearance || 'SOVEREIGN-L5'}
+            </span>
           </div>
-          <div className="text-[10px] font-mono text-on-surface-variant/80 mt-1">
+          <div className="text-[10px] font-mono text-[#888888] mt-2">
             UPTIME: {health ? `${health.uptime_seconds}s` : '0s'}
           </div>
         </div>
@@ -120,25 +113,25 @@ export function HealthStatusCard() {
 
       {/* Diagnostic / Error banner if any */}
       {error && (
-        <div className="p-space-sm bg-error-container/20 border border-primary-container text-primary font-mono text-xs mb-space-sm">
-          <div className="font-bold flex items-center gap-1.5">
-            <span className="material-symbols-outlined text-[16px]">warning</span>
-            LINK ERROR: Unable to communicate with FastAPI at http://localhost:8000
+        <div className="p-3.5 bg-rose-50 border border-rose-200 text-rose-900 font-mono text-xs rounded-lg">
+          <div className="font-bold flex items-center gap-2">
+            <span className="material-symbols-outlined text-[16px] text-rose-600">warning</span>
+            <span>BACKEND LINK NOTICE: Unable to communicate with FastAPI at backend URL</span>
           </div>
-          <div className="mt-1 text-[11px] text-on-surface-variant">
-            Detail: {error}. Ensure FastAPI is running via <code className="text-primary font-bold">npm run dev:api</code>.
+          <div className="mt-1 text-[11px] text-rose-700">
+            Detail: {error}. Check backend server status or NEXT_PUBLIC_API_URL.
           </div>
         </div>
       )}
 
       {/* JSON Payload Inspector Drawer */}
       <details className="cursor-pointer group">
-        <summary className="font-mono text-[11px] text-on-surface-variant uppercase hover:text-white flex items-center gap-1">
+        <summary className="font-mono text-[11px] text-[#666666] uppercase hover:text-[#111111] flex items-center gap-1.5 transition-colors">
           <span className="material-symbols-outlined text-[14px]">data_object</span>
-          VIEW RAW HEALTH CONTRACT PAYLOAD (HTTP 200)
+          <span>VIEW HEALTH CONTRACT RESPONSE (HTTP 200)</span>
         </summary>
-        <pre className="mt-2 p- space-sm bg-surface-container-lowest border border-border-default p-2 text-[10px] font-mono text-secondary overflow-x-auto max-h-48">
-          {health ? JSON.stringify(health, null, 2) : error ? JSON.stringify({ error, target: 'http://localhost:8000/health' }, null, 2) : 'Awaiting handshake...'}
+        <pre className="mt-2 p-3 bg-[#FAFAFA] border border-[#E5E5E5] text-[10px] font-mono text-[#111111] overflow-x-auto max-h-48 rounded-lg">
+          {health ? JSON.stringify(health, null, 2) : error ? JSON.stringify({ error }, null, 2) : 'Awaiting handshake...'}
         </pre>
       </details>
     </div>

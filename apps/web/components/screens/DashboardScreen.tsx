@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { TabType, ApprovalRequest } from '../../types';
+import { TabType } from '../../types';
 import { executeAgentWorkflow, AgentRunResult } from '../../services/agentEngine';
+import { HealthStatusCard } from '../HealthStatusCard';
 
 interface DashboardScreenProps {
   onNavigate: (tab: TabType) => void;
@@ -97,36 +98,36 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
       {/* 4 SUMMARY STAT CARDS */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Card 1: Active Agents */}
-        <div className="bg-[#0f1117] p-5 rounded-2xl border border-[#1e222d] shadow-md hover:border-[#2d3345] transition flex flex-col justify-between">
-          <div className="flex items-center justify-between text-[#8e95a5]">
+        <div className="bg-white p-5 rounded-xl border border-[#E5E5E5] shadow-xs hover:border-[#CCCCCC] transition flex flex-col justify-between">
+          <div className="flex items-center justify-between text-[#666666]">
             <span className="text-[11px] font-['JetBrains_Mono'] uppercase tracking-wider font-semibold">
-              COMPANY AI AGENTS
+              Company AI Agents
             </span>
-            <span className="material-symbols-outlined text-[20px] text-[#38bdf8]">smart_toy</span>
+            <span className="material-symbols-outlined text-[20px] text-[#111111]">smart_toy</span>
           </div>
           <div className="flex items-baseline justify-between mt-3">
-            <span className="font-['Space_Grotesk'] text-3xl font-bold text-white tracking-tight">
+            <span className="font-['Space_Grotesk'] text-3xl font-bold text-[#111111] tracking-tight">
               3
             </span>
-            <span className="text-xs font-['JetBrains_Mono'] font-medium px-2.5 py-0.5 rounded-full bg-[#10b981]/15 text-[#34d399] border border-[#10b981]/30">
+            <span className="text-xs font-['JetBrains_Mono'] font-medium px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
               ● All Online
             </span>
           </div>
         </div>
 
         {/* Card 2: Strategy Missions */}
-        <div className="bg-[#0f1117] p-5 rounded-2xl border border-[#1e222d] shadow-md hover:border-[#2d3345] transition flex flex-col justify-between">
-          <div className="flex items-center justify-between text-[#8e95a5]">
+        <div className="bg-white p-5 rounded-xl border border-[#E5E5E5] shadow-xs hover:border-[#CCCCCC] transition flex flex-col justify-between">
+          <div className="flex items-center justify-between text-[#666666]">
             <span className="text-[11px] font-['JetBrains_Mono'] uppercase tracking-wider font-semibold">
-              ACTIVE MISSIONS
+              Active Missions
             </span>
-            <span className="material-symbols-outlined text-[20px] text-[#818cf8]">psychology</span>
+            <span className="material-symbols-outlined text-[20px] text-[#111111]">psychology</span>
           </div>
           <div className="flex items-baseline justify-between mt-3">
-            <span className="font-['Space_Grotesk'] text-3xl font-bold text-white tracking-tight">
+            <span className="font-['Space_Grotesk'] text-3xl font-bold text-[#111111] tracking-tight">
               128
             </span>
-            <span className="text-xs font-['JetBrains_Mono'] font-medium px-2.5 py-0.5 rounded-full bg-[#818cf8]/15 text-[#a5b4fc] border border-[#818cf8]/30">
+            <span className="text-xs font-['JetBrains_Mono'] font-medium px-2.5 py-0.5 rounded-full bg-[#F5F5F5] text-[#111111] border border-[#E5E5E5]">
               AI Strategized
             </span>
           </div>
@@ -135,37 +136,37 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
         {/* Card 3: Business Owner Approvals */}
         <div 
           onClick={() => onNavigate('approvals')}
-          className="bg-[#0f1117] p-5 rounded-2xl border border-[#dc2626]/40 shadow-[0_0_20px_rgba(220,38,38,0.14)] hover:border-[#dc2626] transition flex flex-col justify-between cursor-pointer group"
+          className="bg-white p-5 rounded-xl border border-amber-300 shadow-xs hover:border-[#111111] transition flex flex-col justify-between cursor-pointer group"
         >
-          <div className="flex items-center justify-between text-[#fca5a5]">
+          <div className="flex items-center justify-between text-amber-900">
             <span className="text-[11px] font-['JetBrains_Mono'] uppercase tracking-wider font-bold">
-              OWNER APPROVALS
+              Owner Approvals
             </span>
-            <span className="material-symbols-outlined text-[20px] text-[#ef4444] animate-pulse">verified_user</span>
+            <span className="material-symbols-outlined text-[20px] text-amber-700">verified_user</span>
           </div>
           <div className="flex items-baseline justify-between mt-3">
-            <span className="font-['Space_Grotesk'] text-3xl font-bold text-[#f87171] tracking-tight group-hover:text-white transition">
+            <span className="font-['Space_Grotesk'] text-3xl font-bold text-[#111111] tracking-tight group-hover:text-black transition">
               {pendingApprovalsCount > 0 ? pendingApprovalsCount : '1'}
             </span>
-            <span className="text-xs font-['JetBrains_Mono'] font-bold px-2.5 py-0.5 rounded-full bg-[#dc2626]/20 text-[#fca5a5] border border-[#dc2626]/50">
+            <span className="text-xs font-['JetBrains_Mono'] font-bold px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-900 border border-amber-200">
               Action Required
             </span>
           </div>
         </div>
 
         {/* Card 4: Blocked Actions */}
-        <div className="bg-[#0f1117] p-5 rounded-2xl border border-[#1e222d] shadow-md hover:border-[#2d3345] transition flex flex-col justify-between">
-          <div className="flex items-center justify-between text-[#8e95a5]">
+        <div className="bg-white p-5 rounded-xl border border-[#E5E5E5] shadow-xs hover:border-[#CCCCCC] transition flex flex-col justify-between">
+          <div className="flex items-center justify-between text-[#666666]">
             <span className="text-[11px] font-['JetBrains_Mono'] uppercase tracking-wider font-semibold">
-              POLICY BREACHES
+              Policy Breaches
             </span>
-            <span className="material-symbols-outlined text-[20px] text-[#10b981]">shield</span>
+            <span className="material-symbols-outlined text-[20px] text-emerald-600">shield</span>
           </div>
           <div className="flex items-baseline justify-between mt-3">
-            <span className="font-['Space_Grotesk'] text-3xl font-bold text-white tracking-tight">
+            <span className="font-['Space_Grotesk'] text-3xl font-bold text-[#111111] tracking-tight">
               0
             </span>
-            <span className="text-xs font-['JetBrains_Mono'] font-medium px-2.5 py-0.5 rounded-full bg-[#10b981]/15 text-[#34d399] border border-[#10b981]/30">
+            <span className="text-xs font-['JetBrains_Mono'] font-medium px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
               100% Gated
             </span>
           </div>
@@ -173,31 +174,29 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
       </div>
 
       {/* MISSION COMMAND - INPUT & PRESETS */}
-      <div className="bg-[#0f1117] p-6 lg:p-7 rounded-2xl border border-[#1e222d] shadow-xl relative overflow-hidden flex flex-col gap-5">
-        <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#dc2626] to-transparent opacity-80" />
-
+      <div className="bg-white p-6 lg:p-7 rounded-xl border border-[#E5E5E5] shadow-xs flex flex-col gap-5">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex flex-col gap-0.5">
             <div className="flex items-center gap-2">
-              <span className="material-symbols-outlined text-[#ef4444] text-[20px]">terminal</span>
-              <h2 className="font-['Space_Grotesk'] text-lg font-bold text-white tracking-wide uppercase">
-                MISSION COMMAND
+              <span className="material-symbols-outlined text-[#111111] text-[20px]">terminal</span>
+              <h2 className="font-['Space_Grotesk'] text-base font-bold text-[#111111] tracking-wide uppercase">
+                Mission Command
               </h2>
             </div>
-            <p className="text-xs text-[#8e95a5] font-['Space_Grotesk']">
+            <p className="text-xs text-[#666666] font-['Space_Grotesk']">
               Describe a business objective. The AI will strategize, decompose phases, and allocate company agents.
             </p>
           </div>
 
           {/* Quick preset selector */}
-          <div className="flex items-center gap-1.5 p-1 bg-[#07080b] rounded-xl border border-[#1e222d]">
+          <div className="flex items-center gap-1.5 p-1 bg-[#F5F5F5] rounded-lg border border-[#E5E5E5]">
             <button
               type="button"
               onClick={() => handleSelectExample('inventory')}
-              className={`text-xs font-['Space_Grotesk'] px-3 py-1.5 rounded-lg transition ${
+              className={`text-xs font-['Space_Grotesk'] px-3 py-1.5 rounded-md transition cursor-pointer ${
                 activeCategory === 'inventory'
-                  ? 'bg-[#1e222d] text-white font-semibold shadow-sm'
-                  : 'text-[#8e95a5] hover:text-white'
+                  ? 'bg-white text-[#111111] font-semibold shadow-xs border border-[#E5E5E5]'
+                  : 'text-[#666666] hover:text-[#111111]'
               }`}
             >
               📦 Inventory Restock
@@ -205,10 +204,10 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
             <button
               type="button"
               onClick={() => handleSelectExample('customer')}
-              className={`text-xs font-['Space_Grotesk'] px-3 py-1.5 rounded-lg transition ${
+              className={`text-xs font-['Space_Grotesk'] px-3 py-1.5 rounded-md transition cursor-pointer ${
                 activeCategory === 'customer'
-                  ? 'bg-[#1e222d] text-white font-semibold shadow-sm'
-                  : 'text-[#8e95a5] hover:text-white'
+                  ? 'bg-white text-[#111111] font-semibold shadow-xs border border-[#E5E5E5]'
+                  : 'text-[#666666] hover:text-[#111111]'
               }`}
             >
               💬 Customer Support
@@ -216,10 +215,10 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
             <button
               type="button"
               onClick={() => handleSelectExample('finance')}
-              className={`text-xs font-['Space_Grotesk'] px-3 py-1.5 rounded-lg transition ${
+              className={`text-xs font-['Space_Grotesk'] px-3 py-1.5 rounded-md transition cursor-pointer ${
                 activeCategory === 'finance'
-                  ? 'bg-[#1e222d] text-white font-semibold shadow-sm'
-                  : 'text-[#8e95a5] hover:text-white'
+                  ? 'bg-white text-[#111111] font-semibold shadow-xs border border-[#E5E5E5]'
+                  : 'text-[#666666] hover:text-[#111111]'
               }`}
             >
               💵 Finance &amp; Invoicing
@@ -240,28 +239,28 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
               }
             }}
             placeholder="E.g. Check low-stock products and prepare a restock order."
-            className="w-full bg-[#07080b] text-white font-['Space_Grotesk'] text-base p-4 rounded-xl border border-[#232733] focus:outline-none focus:border-[#dc2626] focus:ring-1 focus:ring-[#dc2626]/40 placeholder:text-[#475569] resize-none leading-relaxed transition"
+            className="w-full bg-[#FAFAFA] text-[#111111] font-['Space_Grotesk'] text-sm p-4 rounded-xl border border-[#E5E5E5] focus:bg-white focus:outline-none focus:border-[#111111] focus:ring-1 focus:ring-[#111111] placeholder:text-[#999999] resize-none leading-relaxed transition"
           />
         </div>
 
         {/* Dispatch status message */}
         {dispatchSuccessMsg && (
-          <div className="p-3 bg-[#10b981]/10 border border-[#10b981]/40 rounded-xl flex items-center gap-2 text-xs font-['Space_Grotesk'] text-[#34d399] animate-pulse">
-            <span className="material-symbols-outlined text-[18px]">verified</span>
+          <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center gap-2 text-xs font-['Space_Grotesk'] text-emerald-800">
+            <span className="material-symbols-outlined text-[18px] text-emerald-600">verified</span>
             <span className="font-semibold">{dispatchSuccessMsg}</span>
           </div>
         )}
 
         <div className="flex items-center justify-between gap-4">
-          <span className="text-[11px] font-['JetBrains_Mono'] text-[#64748b] hidden sm:inline">
-            Active Strategic Orchestrator: <strong className="text-[#38bdf8]">Autonomous Strategic Neural Engine</strong>
+          <span className="text-[11px] font-['JetBrains_Mono'] text-[#666666] hidden sm:inline">
+            Active Strategic Orchestrator: <strong className="text-[#111111]">Autonomous Strategic Neural Engine</strong>
           </span>
 
           <button
             type="button"
             onClick={() => handleRun()}
             disabled={!missionInput.trim() || isBusy}
-            className="ml-auto px-7 py-3 bg-gradient-to-r from-[#dc2626] to-[#b91c1c] hover:from-[#ef4444] hover:to-[#dc2626] disabled:opacity-50 text-white font-['Space_Grotesk'] text-sm font-bold uppercase tracking-wider rounded-xl shadow-[0_0_20px_rgba(220,38,38,0.4)] transition cursor-pointer flex items-center gap-2"
+            className="ml-auto px-6 py-2.5 bg-[#111111] hover:bg-black disabled:opacity-50 text-white font-['Space_Grotesk'] text-xs font-bold uppercase tracking-wider rounded-xl shadow-xs transition cursor-pointer flex items-center gap-2"
           >
             {isBusy ? (
               <>
@@ -278,58 +277,58 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
         </div>
       </div>
 
-      {/* NEW: AI STRATEGY & COMPANY AGENTS ALLOCATION MATRIX */}
+      {/* AI STRATEGY & COMPANY AGENTS ALLOCATION MATRIX */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         
         {/* LEFT: AI STRATEGY & PHASE ROADMAP (7 COLS) */}
         <div className="lg:col-span-7 flex flex-col gap-6">
           
           {/* AI STRATEGY CARD */}
-          <div className="bg-[#0f1117] p-6 lg:p-7 rounded-2xl border border-[#1e222d] shadow-xl flex flex-col gap-5">
-            <div className="flex items-center justify-between border-b border-[#1a1c23] pb-4">
+          <div className="bg-white p-6 lg:p-7 rounded-xl border border-[#E5E5E5] shadow-xs flex flex-col gap-5">
+            <div className="flex items-center justify-between border-b border-[#E5E5E5] pb-4">
               <div className="flex items-center gap-2.5">
-                <span className="w-8 h-8 rounded-lg bg-[#818cf8]/15 border border-[#818cf8]/30 flex items-center justify-center text-[#818cf8]">
+                <span className="w-8 h-8 rounded-lg bg-[#F5F5F5] border border-[#E5E5E5] flex items-center justify-center text-[#111111]">
                   <span className="material-symbols-outlined text-[18px]">psychology</span>
                 </span>
                 <div className="flex flex-col">
-                  <span className="text-[10px] font-['JetBrains_Mono'] uppercase tracking-widest text-[#818cf8] font-bold">
-                    AI STRATEGIST ARCHITECTURE
+                  <span className="text-[10px] font-['JetBrains_Mono'] uppercase tracking-widest text-[#666666] font-bold">
+                    AI Strategist Architecture
                   </span>
-                  <h3 className="font-['Space_Grotesk'] text-sm font-bold text-white uppercase tracking-wider">
-                    OPERATIONAL STRATEGY &amp; DECOMPOSITION
+                  <h3 className="font-['Space_Grotesk'] text-sm font-bold text-[#111111] uppercase tracking-wider">
+                    Operational Strategy &amp; Decomposition
                   </h3>
                 </div>
               </div>
 
-              <span className="text-[11px] font-['JetBrains_Mono'] text-[#a5b4fc] px-2.5 py-0.5 rounded-full bg-[#818cf8]/10 border border-[#818cf8]/25 flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#818cf8] animate-pulse" />
+              <span className="text-[11px] font-['JetBrains_Mono'] text-[#111111] px-2.5 py-0.5 rounded-full bg-[#F5F5F5] border border-[#E5E5E5] flex items-center gap-1.5 font-medium">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                 Strategy Active
               </span>
             </div>
 
             {/* Strategic Objective Quote Box */}
-            <div className="p-4 rounded-xl bg-[#090a0e] border border-[#1e222d] flex flex-col gap-2">
-              <span className="text-[10px] font-['JetBrains_Mono'] uppercase tracking-wider text-[#64748b] font-semibold">
+            <div className="p-4 rounded-xl bg-[#FAFAFA] border border-[#E5E5E5] flex flex-col gap-1.5">
+              <span className="text-[10px] font-['JetBrains_Mono'] uppercase tracking-wider text-[#666666] font-semibold">
                 Strategic Objective:
               </span>
-              <p className="font-['Space_Grotesk'] text-sm text-white font-medium leading-relaxed">
+              <p className="font-['Space_Grotesk'] text-sm text-[#111111] font-medium leading-relaxed">
                 "{plan?.objective || 'Detect supply chain inventory depletion and stage replenishments while strictly enforcing capital gating.'}"
               </p>
             </div>
 
             {/* Strategic Rationale */}
             <div className="flex flex-col gap-1.5">
-              <span className="text-[10px] font-['JetBrains_Mono'] uppercase tracking-wider text-[#8e95a5]">
+              <span className="text-[10px] font-['JetBrains_Mono'] uppercase tracking-wider text-[#666666]">
                 AI Strategic Rationale:
               </span>
-              <p className="font-['Space_Grotesk'] text-xs text-[#cbd5e1] leading-relaxed">
+              <p className="font-['Space_Grotesk'] text-xs text-[#444444] leading-relaxed">
                 {plan?.strategicRationale || `Assigned primary responsibility to ${activeRun.targetAgent.name} based on domain ontology. Sensitive financial impact detected: Action halted at Gatehouse perimeter awaiting operator biometric confirmation.`}
               </p>
             </div>
 
             {/* Phased Strategic Roadmap */}
             <div className="flex flex-col gap-3 pt-2">
-              <span className="text-[11px] font-['JetBrains_Mono'] uppercase tracking-wider text-[#8e95a5] font-semibold">
+              <span className="text-[11px] font-['JetBrains_Mono'] uppercase tracking-wider text-[#666666] font-semibold">
                 Phased Execution Plan:
               </span>
 
@@ -337,8 +336,8 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
                 {(plan?.executionPhases || [
                   { phaseNumber: 1, phaseName: 'Ingress & Domain Decomposition', responsibleAgent: 'Gatehouse Core', actionDescription: 'Parse business objective AST and allocate specialized company agents', isAutonomous: true },
                   { phaseNumber: 2, phaseName: 'Telemetry & Inventory Scan', responsibleAgent: 'Inventory Agent', actionDescription: 'Audit Warehouse 04 stock and isolate depleted items below safety margin', isAutonomous: true },
-                  { phaseNumber: 3, phaseName: 'Structure Purchase Order', responsibleAgent: 'Finance Agent', actionDescription: 'Draft Supplier PO for National Logistics Hub (₹18,500)', isAutonomous: true },
-                  { phaseNumber: 4, phaseName: 'Business Owner Gating', responsibleAgent: 'Owner Perimeter', actionDescription: 'Order exceeds ₹14,000 threshold. Escalate for human authorization', isAutonomous: false },
+                  { phaseNumber: 3, phaseName: 'Structure Purchase Order', responsibleAgent: 'Finance Agent', actionDescription: `Draft Supplier PO for ${activeRun.approvalRequest?.supplier || 'National Logistics Hub'} (${activeRun.approvalRequest?.amountFormatted || '₹18,500'})`, isAutonomous: true },
+                  { phaseNumber: 4, phaseName: 'Business Owner Gating', responsibleAgent: 'Owner Perimeter', actionDescription: `Order exceeds ${activeRun.approvalRequest?.limitFormatted || '₹14,000'} threshold. Escalate for human authorization`, isAutonomous: false },
                   { phaseNumber: 5, phaseName: 'ERP Downstream Commit', responsibleAgent: 'Supabase Engine', actionDescription: 'Commit signed transaction to database and log tamper-evident audit record', isAutonomous: true },
                 ]).map((ph) => {
                   const isCurrentGated = ph.phaseNumber === 4 && (isHalted || !localApproved);
@@ -349,28 +348,28 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
                       key={ph.phaseNumber}
                       className={`p-3 rounded-xl border flex items-center justify-between gap-3 transition ${
                         isCurrentGated
-                          ? 'bg-[#181113] border-[#dc2626]/50 shadow-[0_0_15px_rgba(220,38,38,0.15)]'
+                          ? 'bg-amber-50/70 border-amber-300 shadow-xs'
                           : isDone
-                          ? 'bg-[#090a0e] border-[#1e222d]'
-                          : 'bg-[#090a0e]/60 border-[#1a1c24] text-[#64748b]'
+                          ? 'bg-[#FAFAFA] border-[#E5E5E5]'
+                          : 'bg-white border-[#E5E5E5] text-[#888888]'
                       }`}
                     >
                       <div className="flex items-center gap-3">
                         <span className={`w-6 h-6 rounded-md flex items-center justify-center font-['JetBrains_Mono'] text-[11px] font-bold ${
                           isCurrentGated
-                            ? 'bg-[#dc2626] text-white animate-pulse'
+                            ? 'bg-amber-200 text-amber-900 border border-amber-300'
                             : isDone
-                            ? 'bg-[#10b981]/20 text-[#34d399]'
-                            : 'bg-[#1e222d] text-[#64748b]'
+                            ? 'bg-emerald-100 text-emerald-800'
+                            : 'bg-[#F5F5F5] text-[#888888]'
                         }`}>
                           {isDone ? '✓' : `0${ph.phaseNumber}`}
                         </span>
 
                         <div className="flex flex-col">
-                          <span className={`font-semibold ${isCurrentGated ? 'text-[#fca5a5]' : isDone ? 'text-white' : 'text-[#8e95a5]'}`}>
+                          <span className={`font-semibold ${isCurrentGated ? 'text-amber-950' : isDone ? 'text-[#111111]' : 'text-[#666666]'}`}>
                             Phase 0{ph.phaseNumber}: {ph.phaseName}
                           </span>
-                          <span className="text-[11px] text-[#8e95a5]">
+                          <span className="text-[11px] text-[#666666]">
                             {ph.actionDescription}
                           </span>
                         </div>
@@ -379,10 +378,10 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
                       <div className="shrink-0 text-right">
                         <span className={`text-[10px] font-['JetBrains_Mono'] font-bold px-2 py-0.5 rounded ${
                           isCurrentGated
-                            ? 'bg-[#dc2626]/20 text-[#fca5a5] border border-[#dc2626]/40 animate-pulse'
+                            ? 'bg-amber-100 text-amber-900 border border-amber-300'
                             : isDone
-                            ? 'bg-[#10b981]/15 text-[#34d399]'
-                            : 'bg-[#1e222d] text-[#64748b]'
+                            ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                            : 'bg-[#F5F5F5] text-[#888888]'
                         }`}>
                           {isCurrentGated ? '⚠ OWNER GATED' : isDone ? 'COMPLETED' : 'QUEUED'}
                         </span>
@@ -401,15 +400,15 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
         <div className="lg:col-span-5 flex flex-col gap-6">
           
           {/* ASSIGNED COMPANY AI AGENTS FOR THIS TASK */}
-          <div className="bg-[#0f1117] p-6 lg:p-7 rounded-2xl border border-[#1e222d] shadow-xl flex flex-col gap-4">
-            <div className="flex items-center justify-between border-b border-[#1a1c23] pb-3">
+          <div className="bg-white p-6 lg:p-7 rounded-xl border border-[#E5E5E5] shadow-xs flex flex-col gap-4">
+            <div className="flex items-center justify-between border-b border-[#E5E5E5] pb-3">
               <div className="flex items-center gap-2">
-                <span className="material-symbols-outlined text-[#38bdf8] text-[20px]">group_work</span>
-                <h3 className="font-['Space_Grotesk'] text-sm font-bold text-white uppercase tracking-wider">
-                  COMPANY AGENTS ASSIGNED TO TASK
+                <span className="material-symbols-outlined text-[#111111] text-[20px]">group_work</span>
+                <h3 className="font-['Space_Grotesk'] text-sm font-bold text-[#111111] uppercase tracking-wider">
+                  Company Agents Assigned
                 </h3>
               </div>
-              <span className="text-xs font-['JetBrains_Mono'] text-[#38bdf8]">
+              <span className="text-xs font-['JetBrains_Mono'] text-[#666666] font-semibold">
                 {plan?.allocatedAgents?.length || 2} Allocated
               </span>
             </div>
@@ -440,38 +439,38 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
               ]).map((agent) => (
                 <div 
                   key={agent.agentCode}
-                  className="p-4 rounded-xl bg-[#090a0e] border border-[#1e222d] hover:border-[#2d3345] transition flex flex-col gap-2.5"
+                  className="p-4 rounded-xl bg-[#FAFAFA] border border-[#E5E5E5] hover:border-[#CCCCCC] transition flex flex-col gap-2.5"
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 rounded-full bg-[#10b981] animate-pulse" />
-                      <span className="font-['Space_Grotesk'] text-sm font-bold text-white">
+                      <div className="w-2 h-2 rounded-full bg-emerald-500" />
+                      <span className="font-['Space_Grotesk'] text-sm font-bold text-[#111111]">
                         {agent.agentName}
                       </span>
-                      <span className="text-[10px] font-['JetBrains_Mono'] px-1.5 py-0.5 rounded bg-[#181a24] text-[#8e95a5]">
+                      <span className="text-[10px] font-['JetBrains_Mono'] px-1.5 py-0.5 rounded bg-white border border-[#E5E5E5] text-[#666666]">
                         {agent.agentCode}
                       </span>
                     </div>
 
-                    <span className="text-[10px] font-['JetBrains_Mono'] px-2 py-0.5 rounded bg-[#38bdf8]/15 text-[#38bdf8]">
+                    <span className="text-[10px] font-['JetBrains_Mono'] px-2 py-0.5 rounded bg-white border border-[#E5E5E5] text-[#111111] font-semibold">
                       {agent.clearance}
                     </span>
                   </div>
 
                   <div className="flex flex-col gap-1 text-xs font-['Space_Grotesk']">
-                    <span className="text-[#38bdf8] font-['JetBrains_Mono'] text-[11px]">
+                    <span className="text-[#666666] font-['JetBrains_Mono'] text-[11px] font-medium">
                       Role: {agent.role}
                     </span>
-                    <span className="text-[#cbd5e1] leading-relaxed">
-                      <strong>Assigned Task:</strong> {agent.assignedTask}
+                    <span className="text-[#444444] leading-relaxed">
+                      <strong className="text-[#111111]">Assigned Task:</strong> {agent.assignedTask}
                     </span>
                   </div>
 
-                  <div className="flex items-center justify-between pt-2 border-t border-[#161822] text-[10px] font-['JetBrains_Mono'] text-[#64748b]">
+                  <div className="flex items-center justify-between pt-2 border-t border-[#E5E5E5] text-[10px] font-['JetBrains_Mono'] text-[#666666]">
                     <span>Enclave: {agent.enclave}</span>
                     <div className="flex gap-1">
                       {agent.boundTools?.map((t: string) => (
-                        <span key={t} className="px-1.5 py-0.5 rounded bg-[#161822] text-[#94a3b8]">
+                        <span key={t} className="px-1.5 py-0.5 rounded bg-white border border-[#E5E5E5] text-[#111111]">
                           {t}
                         </span>
                       ))}
@@ -484,7 +483,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
             <button
               type="button"
               onClick={() => onNavigate('agents')}
-              className="w-full py-2 bg-[#12141c] hover:bg-[#181b26] text-[#94a3b8] hover:text-white font-['Space_Grotesk'] text-xs font-semibold rounded-lg border border-[#1e222d] transition flex items-center justify-center gap-1.5"
+              className="w-full py-2 bg-white hover:bg-[#F5F5F5] text-[#111111] font-['Space_Grotesk'] text-xs font-semibold rounded-lg border border-[#E5E5E5] transition flex items-center justify-center gap-1.5 cursor-pointer"
             >
               <span>Manage Company Agent Capabilities</span>
               <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
@@ -493,22 +492,22 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
 
           {/* DEDICATED BUSINESS OWNER APPROVAL CALLOUT CARD */}
           {(isHalted || pendingApprovalsCount > 0) && (
-            <div className={`p-6 rounded-2xl border-2 transition-all flex flex-col gap-4 ${
+            <div className={`p-6 rounded-xl border transition-all flex flex-col gap-4 ${
               localApproved
-                ? 'bg-[#0f1915] border-[#10b981]/50 shadow-[0_0_20px_rgba(16,185,129,0.2)]'
-                : 'bg-[#181013] border-[#dc2626] shadow-[0_0_30px_rgba(220,38,38,0.3)]'
+                ? 'bg-emerald-50 border-emerald-300 text-emerald-950 shadow-xs'
+                : 'bg-amber-50/70 border-2 border-amber-300 text-[#111111] shadow-xs'
             }`}>
               {localApproved ? (
                 /* Approved Confirmation */
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-[#10b981]/20 border border-[#10b981] flex items-center justify-center text-xl text-[#10b981] font-bold">
+                  <div className="w-10 h-10 rounded-full bg-emerald-100 border border-emerald-300 flex items-center justify-center text-xl text-emerald-700 font-bold">
                     ✓
                   </div>
                   <div className="flex flex-col">
-                    <span className="font-['Space_Grotesk'] text-sm font-bold text-white">
+                    <span className="font-['Space_Grotesk'] text-sm font-bold text-emerald-950">
                       TASK APPROVED BY BUSINESS OWNER
                     </span>
-                    <span className="text-xs text-[#a7f3d0] font-['Space_Grotesk']">
+                    <span className="text-xs text-emerald-800 font-['Space_Grotesk']">
                       Purchase order authorized. State committed downstream to database.
                     </span>
                   </div>
@@ -516,33 +515,33 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
               ) : (
                 /* Needs Owner Approval */
                 <>
-                  <div className="flex items-center justify-between border-b border-[#dc2626]/30 pb-3">
+                  <div className="flex items-center justify-between border-b border-amber-200 pb-3">
                     <div className="flex items-center gap-2">
-                      <span className="w-2.5 h-2.5 rounded-full bg-[#dc2626] animate-ping" />
-                      <h4 className="font-['Space_Grotesk'] text-xs font-bold text-[#fca5a5] uppercase tracking-wider">
-                        BUSINESS OWNER APPROVAL REQUIRED
+                      <span className="w-2.5 h-2.5 rounded-full bg-amber-500" />
+                      <h4 className="font-['Space_Grotesk'] text-xs font-bold text-amber-950 uppercase tracking-wider">
+                        Business Owner Approval Required
                       </h4>
                     </div>
-                    <span className="px-2 py-0.5 rounded bg-[#dc2626] text-white text-[10px] font-['JetBrains_Mono'] font-bold">
+                    <span className="px-2 py-0.5 rounded bg-amber-200 text-amber-950 text-[10px] font-['JetBrains_Mono'] font-bold">
                       {activeRun.approvalRequest?.riskLevel || 'CRITICAL'}
                     </span>
                   </div>
 
                   <div className="flex flex-col gap-1.5">
-                    <span className="text-xs text-[#8e95a5] font-['JetBrains_Mono'] uppercase">
+                    <span className="text-xs text-[#666666] font-['JetBrains_Mono'] uppercase">
                       Action Staged:
                     </span>
-                    <h3 className="font-['Space_Grotesk'] text-base font-bold text-white">
+                    <h3 className="font-['Space_Grotesk'] text-base font-bold text-[#111111]">
                       {activeRun.approvalRequest?.title || 'Create Purchase Order for National Logistics Hub'}
                     </h3>
-                    <div className="p-3 rounded-xl bg-[#090a0e] border border-[#1e222b] flex items-center justify-between">
-                      <span className="text-xs text-[#8e95a5] font-['Space_Grotesk']">Order Value / Financial Impact:</span>
-                      <span className="text-lg font-bold text-[#fca5a5] font-['Space_Grotesk']">
+                    <div className="p-3 rounded-xl bg-white border border-amber-200 flex items-center justify-between">
+                      <span className="text-xs text-[#666666] font-['Space_Grotesk']">Order Value / Financial Impact:</span>
+                      <span className="text-lg font-bold text-[#111111] font-['Space_Grotesk']">
                         {activeRun.approvalRequest?.amountFormatted || '₹18,500 ($34,800 USD)'}
                       </span>
                     </div>
-                    <p className="text-xs text-[#cbd5e1] font-['Space_Grotesk'] leading-relaxed pt-1">
-                      <strong>Owner Gate:</strong> {activeRun.approvalRequest?.description || 'Exceeds autonomous spending ceiling (₹14,000) by ₹4,500. Awaiting your authorization.'}
+                    <p className="text-xs text-[#444444] font-['Space_Grotesk'] leading-relaxed pt-1">
+                      <strong className="text-[#111111]">Owner Gate:</strong> {activeRun.approvalRequest?.description || 'Exceeds autonomous spending ceiling (₹14,000) by ₹4,500. Awaiting your authorization.'}
                     </p>
                   </div>
 
@@ -551,7 +550,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
                     <button
                       type="button"
                       onClick={() => onNavigate('approvals')}
-                      className="py-2.5 bg-[#161822] hover:bg-[#202330] text-[#fca5a5] font-['Space_Grotesk'] text-xs font-bold uppercase rounded-xl border border-[#dc2626]/40 transition"
+                      className="py-2.5 bg-white hover:bg-[#F5F5F5] text-[#111111] font-['Space_Grotesk'] text-xs font-bold uppercase rounded-xl border border-[#E5E5E5] transition cursor-pointer"
                     >
                       View Details
                     </button>
@@ -560,7 +559,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
                       type="button"
                       onClick={handleQuickApprove}
                       disabled={isApproving}
-                      className="py-2.5 bg-[#dc2626] hover:bg-[#b91c1c] text-white font-['Space_Grotesk'] text-xs font-bold uppercase rounded-xl shadow-[0_0_15px_rgba(220,38,38,0.5)] transition flex items-center justify-center gap-1.5 cursor-pointer"
+                      className="py-2.5 bg-[#111111] hover:bg-black text-white font-['Space_Grotesk'] text-xs font-bold uppercase rounded-xl shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer"
                     >
                       <span className="material-symbols-outlined text-[16px]">check</span>
                       <span>{isApproving ? 'Authorizing...' : 'Approve Task'}</span>
@@ -575,18 +574,21 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
 
       </div>
 
+      {/* HEALTH & TELEMETRY SECTION */}
+      <HealthStatusCard />
+
       {/* BOTTOM: RECENT OPERATIONS AUDIT LEDGER */}
-      <div className="bg-[#0f1117] rounded-2xl border border-[#1e222d] shadow-xl overflow-hidden flex flex-col">
-        <div className="p-5 border-b border-[#1a1c23] flex items-center justify-between">
+      <div className="bg-white rounded-xl border border-[#E5E5E5] shadow-xs overflow-hidden flex flex-col">
+        <div className="p-5 border-b border-[#E5E5E5] flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className="material-symbols-outlined text-[#8e95a5] text-[18px]">history</span>
-            <h3 className="font-['Space_Grotesk'] text-sm font-bold text-white uppercase tracking-wider">
-              RECENT OPERATIONS &amp; BUSINESS DECISIONS
+            <span className="material-symbols-outlined text-[#111111] text-[18px]">history</span>
+            <h3 className="font-['Space_Grotesk'] text-sm font-bold text-[#111111] uppercase tracking-wider">
+              Recent Operations &amp; Business Decisions
             </h3>
           </div>
           <button 
             onClick={() => onNavigate('activity-logs')}
-            className="text-xs font-['JetBrains_Mono'] text-[#38bdf8] hover:underline flex items-center gap-1"
+            className="text-xs font-['JetBrains_Mono'] text-[#111111] hover:underline flex items-center gap-1 font-semibold cursor-pointer"
           >
             <span>View Full Audit Ledger</span>
             <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
@@ -595,7 +597,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
 
         <div className="overflow-x-auto">
           <table className="w-full text-left font-['Space_Grotesk'] text-xs">
-            <thead className="bg-[#07080a] text-[#64748b] font-['JetBrains_Mono'] uppercase text-[10px] tracking-wider border-b border-[#1a1c23]">
+            <thead className="bg-[#FAFAFA] text-[#666666] font-['JetBrains_Mono'] uppercase text-[10px] tracking-wider border-b border-[#E5E5E5]">
               <tr>
                 <th className="py-3.5 px-6">TIME</th>
                 <th className="py-3.5 px-6">AGENT ASSIGNED</th>
@@ -604,58 +606,60 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
                 <th className="py-3.5 px-6 text-right">ACTION</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#1a1c23]">
-              <tr className="hover:bg-[#14161f] transition">
-                <td className="py-3.5 px-6 font-['JetBrains_Mono'] text-[#8e95a5]">14:02</td>
-                <td className="py-3.5 px-6 font-semibold text-white">Inventory Agent</td>
-                <td className="py-3.5 px-6 text-[#cbd5e1]">Stock Check &amp; Depletion Audit (WH-04 East)</td>
+            <tbody className="divide-y divide-[#EEEEEE]">
+              <tr className="hover:bg-[#FAFAFA] transition">
+                <td className="py-3.5 px-6 font-['JetBrains_Mono'] text-[#666666]">14:02</td>
+                <td className="py-3.5 px-6 font-semibold text-[#111111]">Inventory Agent</td>
+                <td className="py-3.5 px-6 text-[#444444]">Stock Check &amp; Depletion Audit (WH-04 East)</td>
                 <td className="py-3.5 px-6">
-                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-['JetBrains_Mono'] bg-[#10b981]/15 text-[#34d399] border border-[#10b981]/30 font-medium">
+                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-['JetBrains_Mono'] bg-emerald-50 text-emerald-700 border border-emerald-200 font-medium">
                     ✓ Completed
                   </span>
                 </td>
                 <td className="py-3.5 px-6 text-right">
                   <button 
                     onClick={() => onNavigate('operations')}
-                    className="text-[#38bdf8] hover:underline font-['JetBrains_Mono'] text-[11px]"
+                    className="text-[#111111] hover:underline font-['JetBrains_Mono'] text-[11px] font-semibold cursor-pointer"
                   >
                     Inspect Trace
                   </button>
                 </td>
               </tr>
 
-              <tr className="hover:bg-[#14161f] transition">
-                <td className="py-3.5 px-6 font-['JetBrains_Mono'] text-[#8e95a5]">13:57</td>
-                <td className="py-3.5 px-6 font-semibold text-white">Customer Agent</td>
-                <td className="py-3.5 px-6 text-[#cbd5e1]">Customer Resolution Reply (Ticket #9042)</td>
+              <tr className="hover:bg-[#FAFAFA] transition">
+                <td className="py-3.5 px-6 font-['JetBrains_Mono'] text-[#666666]">13:57</td>
+                <td className="py-3.5 px-6 font-semibold text-[#111111]">Customer Agent</td>
+                <td className="py-3.5 px-6 text-[#444444]">Customer Resolution Reply (Ticket #9042)</td>
                 <td className="py-3.5 px-6">
-                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-['JetBrains_Mono'] bg-[#10b981]/15 text-[#34d399] border border-[#10b981]/30 font-medium">
+                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-['JetBrains_Mono'] bg-emerald-50 text-emerald-700 border border-emerald-200 font-medium">
                     ✓ Completed
                   </span>
                 </td>
                 <td className="py-3.5 px-6 text-right">
                   <button 
                     onClick={() => onNavigate('operations')}
-                    className="text-[#38bdf8] hover:underline font-['JetBrains_Mono'] text-[11px]"
+                    className="text-[#111111] hover:underline font-['JetBrains_Mono'] text-[11px] font-semibold cursor-pointer"
                   >
                     Inspect Trace
                   </button>
                 </td>
               </tr>
 
-              <tr className="hover:bg-[#1f1315] bg-[#140c0e]/50 transition">
-                <td className="py-3.5 px-6 font-['JetBrains_Mono'] text-[#f87171]">13:51</td>
-                <td className="py-3.5 px-6 font-semibold text-white">Finance Agent</td>
-                <td className="py-3.5 px-6 text-[#fca5a5]">Supplier Purchase Order (₹18,500)</td>
+              <tr className="bg-amber-50/40 hover:bg-amber-50/70 transition">
+                <td className="py-3.5 px-6 font-['JetBrains_Mono'] text-amber-900 font-medium">13:51</td>
+                <td className="py-3.5 px-6 font-semibold text-[#111111]">Finance Agent</td>
+                <td className="py-3.5 px-6 text-[#111111] font-medium">
+                  Supplier Purchase Order ({activeRun.approvalRequest?.amountFormatted || '₹18,500'})
+                </td>
                 <td className="py-3.5 px-6">
-                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-['JetBrains_Mono'] bg-[#dc2626]/20 text-[#fca5a5] border border-[#dc2626]/50 font-bold animate-pulse">
+                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-['JetBrains_Mono'] bg-amber-100 text-amber-900 border border-amber-300 font-bold">
                     ⚠ Owner Approval Required
                   </span>
                 </td>
                 <td className="py-3.5 px-6 text-right">
                   <button 
                     onClick={() => onNavigate('approvals')}
-                    className="text-[#f87171] hover:underline font-['JetBrains_Mono'] text-[11px] font-bold"
+                    className="text-[#111111] hover:underline font-['JetBrains_Mono'] text-[11px] font-bold cursor-pointer"
                   >
                     Review &amp; Sign →
                   </button>

@@ -14,7 +14,6 @@ export const OperationsScreen: React.FC<OperationsScreenProps> = ({
   onNavigate,
   currentRun,
   onRunMission,
-  isRunning,
 }) => {
   const [activeView, setActiveView] = useState<'strategy' | 'pipeline'>('strategy');
   const [selectedStage, setSelectedStage] = useState<number>(2); // Default to TOOLS stage
@@ -23,6 +22,7 @@ export const OperationsScreen: React.FC<OperationsScreenProps> = ({
 
   // Fallback default run if none active yet
   const activeRun = currentRun || executeAgentWorkflow('Check low-stock products and prepare a restock order.');
+  const req = activeRun.approvalRequest;
   const plan = activeRun.strategicPlan;
   const isHalted = activeRun.haltedForApproval;
   const isCustomer = activeRun.prompt.toLowerCase().includes('customer') || activeRun.prompt.toLowerCase().includes('ticket');
@@ -127,8 +127,8 @@ export const OperationsScreen: React.FC<OperationsScreenProps> = ({
           },
           {
             name: 'prepare_restock_order',
-            input: 'skus: 2, total_value: 18500, supplier: "National Logistics Hub"',
-            output: 'Purchase Order #PO-8841-B structured: Exceeds limit',
+            input: `skus: ${req?.lineItems?.length || 2}, total_value: ${req?.total || 18500}, supplier: "${req?.supplier || 'National Logistics Hub'}"`,
+            output: `Purchase Order #${req?.poNumber || 'PO-8841-B'} structured: Exceeds limit`,
           },
         ],
       },
@@ -139,14 +139,14 @@ export const OperationsScreen: React.FC<OperationsScreenProps> = ({
       icon: 'verified',
       status: 'EVALUATED',
       statusType: 'warning',
-      shortDesc: isCustomer ? 'Rule POL-012: Concession limit exceeded' : isInvoice ? 'Rule POL-044: Ledger limit exceeded' : 'Rule POL-093: Limit ₹14,000 exceeded',
+      shortDesc: isCustomer ? 'Rule POL-012: Concession limit exceeded' : isInvoice ? 'Rule POL-044: Ledger limit exceeded' : `Rule POL-093: Limit ${req?.limitFormatted || '₹14,000'} exceeded`,
       details: {
         title: 'Enclave Security Policy Gate',
         meta: [
-          { label: 'Enforced Rule', value: isCustomer ? 'RULE_POL_012 (Concession Ceiling)' : isInvoice ? 'RULE_POL_044 (Ledger Ceiling)' : 'RULE_POL_093 (Procurement Ceiling)' },
-          { label: 'Autonomous Limit', value: isCustomer ? '$500.00 USD' : isInvoice ? '$25,000.00 USD' : '₹14,000.00 ($16,500 USD)' },
-          { label: 'Action Requested', value: isCustomer ? '$1,250.00 USD' : isInvoice ? '$32,000.00 USD' : '₹18,500.00 ($34,800 USD)' },
-          { label: 'Policy Variance', value: isCustomer ? '+$750.00 (Breach)' : isInvoice ? '+$7,000.00 (Breach)' : '+₹4,500.00 (Breach)' },
+          { label: 'Enforced Rule', value: isCustomer ? 'RULE_POL_012 (Concession Ceiling)' : isInvoice ? 'RULE_POL_044 (Ledger Ceiling)' : (req?.policyRule ? `${req.policyRule} (Procurement Ceiling)` : 'RULE_POL_093 (Procurement Ceiling)') },
+          { label: 'Autonomous Limit', value: isCustomer ? '$500.00 USD' : isInvoice ? '$25,000.00 USD' : (req?.limitFormatted || '₹14,000') },
+          { label: 'Action Requested', value: isCustomer ? '$1,250.00 USD' : isInvoice ? '$32,000.00 USD' : (req?.amountFormatted || '₹18,500') },
+          { label: 'Policy Variance', value: isCustomer ? '+$750.00 (Breach)' : isInvoice ? '+$7,000.00 (Breach)' : `+${req?.varianceFormatted || '₹4,500'} (Breach)` },
           { label: 'Verdict', value: 'INTERCEPTED — MANDATORY HUMAN APPROVAL' },
         ],
       },
@@ -197,24 +197,24 @@ export const OperationsScreen: React.FC<OperationsScreenProps> = ({
     <div className="w-full max-w-[1550px] mx-auto px-6 lg:px-10 py-8 flex flex-col gap-8">
       
       {/* Top Banner: Mission Directive & Quick Presets */}
-      <div className="bg-[#0f1117] p-6 rounded-2xl border border-[#1e222d] shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="bg-white p-6 rounded-xl border border-[#E5E5E5] shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex flex-col gap-1">
           <div className="flex items-center gap-2">
-            <span className="material-symbols-outlined text-[#38bdf8] text-[20px]">bolt</span>
-            <span className="font-['JetBrains_Mono'] text-xs uppercase tracking-wider text-[#8e95a5]">
-              ACTIVE OPERATIONS PIPELINE
+            <span className="material-symbols-outlined text-[#111111] text-[20px]">bolt</span>
+            <span className="font-['JetBrains_Mono'] text-xs uppercase tracking-wider text-[#666666] font-semibold">
+              Active Operations Pipeline
             </span>
           </div>
-          <h1 className="font-['Space_Grotesk'] text-xl sm:text-2xl font-bold text-white tracking-tight">
+          <h1 className="font-['Space_Grotesk'] text-xl sm:text-2xl font-bold text-[#111111] tracking-tight">
             {activeRun.prompt}
           </h1>
         </div>
 
         <div className="flex items-center gap-3 shrink-0">
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#07080b] border border-[#1e222d] text-xs font-['JetBrains_Mono']">
-            <span className="w-2 h-2 rounded-full bg-[#10b981] animate-pulse" />
-            <span className="text-[#94a3b8]">Status:</span>
-            <span className="text-white font-bold">
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#FAFAFA] border border-[#E5E5E5] text-xs font-['JetBrains_Mono']">
+            <span className={`w-2 h-2 rounded-full ${localApproved ? 'bg-emerald-500' : isHalted ? 'bg-amber-500' : 'bg-emerald-500'}`} />
+            <span className="text-[#666666]">Status:</span>
+            <span className="text-[#111111] font-bold">
               {localApproved ? 'Approved & Committed' : isHalted ? 'Owner Approval Required' : 'Completed'}
             </span>
           </div>
@@ -223,7 +223,7 @@ export const OperationsScreen: React.FC<OperationsScreenProps> = ({
             <button
               type="button"
               onClick={() => onNavigate('approvals')}
-              className="px-4 py-2 bg-[#dc2626] hover:bg-[#b91c1c] text-white text-xs font-['Space_Grotesk'] font-bold uppercase rounded-lg shadow-[0_0_15px_rgba(220,38,38,0.4)] transition cursor-pointer flex items-center gap-1.5"
+              className="px-4 py-2 bg-[#111111] hover:bg-black text-white text-xs font-['Space_Grotesk'] font-bold uppercase rounded-lg shadow-xs transition cursor-pointer flex items-center gap-1.5"
             >
               <span>Review Approval</span>
               <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
@@ -235,54 +235,54 @@ export const OperationsScreen: React.FC<OperationsScreenProps> = ({
       {/* QUICK PRESET SELECTORS */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-2 font-['Space_Grotesk'] text-xs">
-          <span className="text-[#64748b] font-['JetBrains_Mono'] mr-1">Switch Scenario:</span>
+          <span className="text-[#666666] font-['JetBrains_Mono'] mr-1 font-medium">Switch Scenario:</span>
           <button
             type="button"
             onClick={() => handleQuickDispatch('Check low-stock products and prepare a restock order.')}
-            className="px-3 py-1.5 rounded-lg bg-[#14161f] hover:bg-[#1f2330] text-[#cbd5e1] border border-[#1e222d] transition cursor-pointer"
+            className="px-3 py-1.5 rounded-lg bg-white hover:bg-[#F5F5F5] text-[#111111] border border-[#E5E5E5] transition cursor-pointer font-medium"
           >
             📦 Inventory Restock (High Risk)
           </button>
           <button
             type="button"
             onClick={() => handleQuickDispatch('Check customer enquiries and draft refund reply.')}
-            className="px-3 py-1.5 rounded-lg bg-[#14161f] hover:bg-[#1f2330] text-[#cbd5e1] border border-[#1e222d] transition cursor-pointer"
+            className="px-3 py-1.5 rounded-lg bg-white hover:bg-[#F5F5F5] text-[#111111] border border-[#E5E5E5] transition cursor-pointer font-medium"
           >
             💬 Customer Refund (Medium Risk)
           </button>
           <button
             type="button"
             onClick={() => handleQuickDispatch('Create commercial invoice for Cyberdyne Systems for $32,000.')}
-            className="px-3 py-1.5 rounded-lg bg-[#14161f] hover:bg-[#1f2330] text-[#cbd5e1] border border-[#1e222d] transition cursor-pointer"
+            className="px-3 py-1.5 rounded-lg bg-white hover:bg-[#F5F5F5] text-[#111111] border border-[#E5E5E5] transition cursor-pointer font-medium"
           >
             💵 Finance Invoice (High Risk)
           </button>
         </div>
 
         {/* View Switcher: Strategy vs Pipeline */}
-        <div className="flex items-center gap-1.5 p-1 bg-[#090a0e] rounded-xl border border-[#1e222d]">
+        <div className="flex items-center gap-1.5 p-1 bg-[#F5F5F5] rounded-xl border border-[#E5E5E5]">
           <button
             type="button"
             onClick={() => setActiveView('strategy')}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-['Space_Grotesk'] font-semibold transition ${
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-['Space_Grotesk'] font-semibold transition cursor-pointer ${
               activeView === 'strategy'
-                ? 'bg-[#1e222d] text-white shadow-sm'
-                : 'text-[#8e95a5] hover:text-white'
+                ? 'bg-white text-[#111111] shadow-xs border border-[#E5E5E5]'
+                : 'text-[#666666] hover:text-[#111111]'
             }`}
           >
-            <span className="material-symbols-outlined text-[16px] text-[#818cf8]">psychology</span>
+            <span className="material-symbols-outlined text-[16px]">psychology</span>
             <span>AI Strategy &amp; Assigned Agents</span>
           </button>
           <button
             type="button"
             onClick={() => setActiveView('pipeline')}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-['Space_Grotesk'] font-semibold transition ${
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-['Space_Grotesk'] font-semibold transition cursor-pointer ${
               activeView === 'pipeline'
-                ? 'bg-[#1e222d] text-white shadow-sm'
-                : 'text-[#8e95a5] hover:text-white'
+                ? 'bg-white text-[#111111] shadow-xs border border-[#E5E5E5]'
+                : 'text-[#666666] hover:text-[#111111]'
             }`}
           >
-            <span className="material-symbols-outlined text-[16px] text-[#38bdf8]">account_tree</span>
+            <span className="material-symbols-outlined text-[16px]">account_tree</span>
             <span>End-to-End Pipeline</span>
           </button>
         </div>
@@ -293,56 +293,56 @@ export const OperationsScreen: React.FC<OperationsScreenProps> = ({
         <div className="flex flex-col gap-6 animate-in fade-in duration-200">
           
           {/* Strategy Rationale & Objective Card */}
-          <div className="bg-[#0f1117] p-6 lg:p-7 rounded-2xl border border-[#1e222d] shadow-xl flex flex-col gap-5">
-            <div className="flex items-center justify-between border-b border-[#1a1c23] pb-3">
+          <div className="bg-white p-6 lg:p-7 rounded-xl border border-[#E5E5E5] shadow-xs flex flex-col gap-5">
+            <div className="flex items-center justify-between border-b border-[#E5E5E5] pb-3">
               <div className="flex items-center gap-2.5">
-                <span className="w-8 h-8 rounded-lg bg-[#818cf8]/15 border border-[#818cf8]/30 flex items-center justify-center text-[#818cf8]">
+                <span className="w-8 h-8 rounded-lg bg-[#F5F5F5] border border-[#E5E5E5] flex items-center justify-center text-[#111111]">
                   <span className="material-symbols-outlined text-[18px]">auto_awesome</span>
                 </span>
                 <div>
-                  <span className="text-[10px] font-['JetBrains_Mono'] uppercase tracking-widest text-[#818cf8] font-bold">
-                    AI STRATEGIC DECOMPOSITION
+                  <span className="text-[10px] font-['JetBrains_Mono'] uppercase tracking-widest text-[#666666] font-bold">
+                    AI Strategic Decomposition
                   </span>
-                  <h3 className="font-['Space_Grotesk'] text-base font-bold text-white">
+                  <h3 className="font-['Space_Grotesk'] text-base font-bold text-[#111111]">
                     Task Strategy for: "{activeRun.prompt}"
                   </h3>
                 </div>
               </div>
 
-              <span className="text-xs font-['JetBrains_Mono'] px-2.5 py-0.5 rounded-full bg-[#10b981]/15 text-[#34d399] border border-[#10b981]/30">
+              <span className="text-xs font-['JetBrains_Mono'] px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-medium">
                 ● Strategy Verified
               </span>
             </div>
 
-            <div className="p-4 rounded-xl bg-[#07080b] border border-[#1a1c24] flex flex-col gap-1.5">
-              <span className="text-[10px] font-['JetBrains_Mono'] uppercase tracking-wider text-[#64748b]">
+            <div className="p-4 rounded-xl bg-[#FAFAFA] border border-[#E5E5E5] flex flex-col gap-1.5">
+              <span className="text-[10px] font-['JetBrains_Mono'] uppercase tracking-wider text-[#666666]">
                 Objective Summary:
               </span>
-              <p className="text-sm font-['Space_Grotesk'] text-white font-medium leading-relaxed">
+              <p className="text-sm font-['Space_Grotesk'] text-[#111111] font-medium leading-relaxed">
                 "{plan?.objective || 'Detect supply chain inventory depletion and stage replenishments while strictly enforcing capital gating.'}"
               </p>
             </div>
 
             <div className="flex flex-col gap-1">
-              <span className="text-[10px] font-['JetBrains_Mono'] uppercase tracking-wider text-[#8e95a5]">
+              <span className="text-[10px] font-['JetBrains_Mono'] uppercase tracking-wider text-[#666666]">
                 AI Strategist Reasoning:
               </span>
-              <p className="text-xs font-['Space_Grotesk'] text-[#cbd5e1] leading-relaxed">
+              <p className="text-xs font-['Space_Grotesk'] text-[#444444] leading-relaxed">
                 {plan?.strategicRationale || `Assigned primary responsibility to ${activeRun.targetAgent.name} based on domain ontology. Sensitive financial impact detected: Action halted at Gatehouse perimeter awaiting operator biometric confirmation.`}
               </p>
             </div>
           </div>
 
           {/* COMPANY AI AGENTS ASSIGNED TO THIS TASK */}
-          <div className="bg-[#0f1117] p-6 lg:p-7 rounded-2xl border border-[#1e222d] shadow-xl flex flex-col gap-5">
-            <div className="flex items-center justify-between border-b border-[#1a1c23] pb-3">
+          <div className="bg-white p-6 lg:p-7 rounded-xl border border-[#E5E5E5] shadow-xs flex flex-col gap-5">
+            <div className="flex items-center justify-between border-b border-[#E5E5E5] pb-3">
               <div className="flex items-center gap-2">
-                <span className="material-symbols-outlined text-[#38bdf8] text-[20px]">badge</span>
-                <h3 className="font-['Space_Grotesk'] text-base font-bold text-white uppercase tracking-wider">
-                  COMPANY AI AGENTS ASSIGNED TO THIS TASK
+                <span className="material-symbols-outlined text-[#111111] text-[20px]">badge</span>
+                <h3 className="font-['Space_Grotesk'] text-base font-bold text-[#111111] uppercase tracking-wider">
+                  Company AI Agents Assigned to this Task
                 </h3>
               </div>
-              <span className="text-xs font-['JetBrains_Mono'] text-[#38bdf8]">
+              <span className="text-xs font-['JetBrains_Mono'] text-[#666666] font-semibold">
                 {plan?.allocatedAgents?.length || 2} Agents Deployed
               </span>
             </div>
@@ -372,44 +372,44 @@ export const OperationsScreen: React.FC<OperationsScreenProps> = ({
               ]).map((agent) => (
                 <div 
                   key={agent.agentCode}
-                  className="p-5 rounded-2xl bg-[#090a0e] border border-[#1e222d] hover:border-[#2d3345] transition flex flex-col justify-between gap-4"
+                  className="p-5 rounded-xl bg-[#FAFAFA] border border-[#E5E5E5] hover:border-[#CCCCCC] transition flex flex-col justify-between gap-4"
                 >
                   <div className="flex flex-col gap-2.5">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <span className="w-2.5 h-2.5 rounded-full bg-[#10b981] animate-pulse" />
-                        <h4 className="font-['Space_Grotesk'] text-base font-bold text-white">
+                        <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
+                        <h4 className="font-['Space_Grotesk'] text-base font-bold text-[#111111]">
                           {agent.agentName}
                         </h4>
-                        <span className="text-[10px] font-['JetBrains_Mono'] px-2 py-0.5 rounded bg-[#161822] text-[#8e95a5]">
+                        <span className="text-[10px] font-['JetBrains_Mono'] px-2 py-0.5 rounded bg-white border border-[#E5E5E5] text-[#666666]">
                           {agent.agentCode}
                         </span>
                       </div>
-                      <span className="text-[10px] font-['JetBrains_Mono'] px-2 py-0.5 rounded bg-[#38bdf8]/15 text-[#38bdf8] font-bold">
+                      <span className="text-[10px] font-['JetBrains_Mono'] px-2 py-0.5 rounded bg-white border border-[#E5E5E5] text-[#111111] font-bold">
                         {agent.clearance}
                       </span>
                     </div>
 
                     <div className="flex flex-col gap-1 text-xs font-['Space_Grotesk']">
-                      <span className="text-xs font-['JetBrains_Mono'] text-[#38bdf8] font-semibold">
+                      <span className="text-xs font-['JetBrains_Mono'] text-[#666666] font-semibold">
                         Role: {agent.role}
                       </span>
-                      <p className="text-xs text-[#cbd5e1] leading-relaxed pt-1">
-                        <strong className="text-white">Assigned Sub-Task:</strong> {agent.assignedTask}
+                      <p className="text-xs text-[#444444] leading-relaxed pt-1">
+                        <strong className="text-[#111111]">Assigned Sub-Task:</strong> {agent.assignedTask}
                       </p>
                     </div>
                   </div>
 
-                  <div className="pt-3 border-t border-[#161822] flex flex-col gap-2 text-[11px] font-['JetBrains_Mono']">
-                    <div className="flex items-center justify-between text-[#8e95a5]">
+                  <div className="pt-3 border-t border-[#E5E5E5] flex flex-col gap-2 text-[11px] font-['JetBrains_Mono']">
+                    <div className="flex items-center justify-between text-[#666666]">
                       <span>Sandbox Enclave:</span>
-                      <span className="text-white">{agent.enclave}</span>
+                      <span className="text-[#111111] font-medium">{agent.enclave}</span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-[#8e95a5]">Bound RPC Tools:</span>
+                      <span className="text-[#666666]">Bound RPC Tools:</span>
                       <div className="flex gap-1">
                         {agent.boundTools?.map((t: string) => (
-                          <span key={t} className="px-1.5 py-0.5 rounded bg-[#161822] text-[#34d399]">
+                          <span key={t} className="px-1.5 py-0.5 rounded bg-white border border-[#E5E5E5] text-[#111111]">
                             {t}
                           </span>
                         ))}
@@ -423,22 +423,22 @@ export const OperationsScreen: React.FC<OperationsScreenProps> = ({
 
           {/* BUSINESS OWNER APPROVALS CHECKPOINT */}
           {(isHalted || Boolean(activeRun.approvalRequest)) && (
-            <div className={`p-6 lg:p-7 rounded-2xl border-2 transition-all flex flex-col gap-5 ${
+            <div className={`p-6 lg:p-7 rounded-xl border transition-all flex flex-col gap-5 ${
               localApproved
-                ? 'bg-[#0f1915] border-[#10b981]/50 shadow-[0_0_20px_rgba(16,185,129,0.2)]'
-                : 'bg-[#181013] border-[#dc2626] shadow-[0_0_30px_rgba(220,38,38,0.3)]'
+                ? 'bg-emerald-50 border-emerald-300 text-emerald-950 shadow-xs'
+                : 'bg-amber-50/70 border-2 border-amber-300 text-[#111111] shadow-xs'
             }`}>
               {localApproved ? (
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-full bg-[#10b981]/20 border border-[#10b981] flex items-center justify-center text-2xl text-[#10b981] font-bold">
+                    <div className="w-12 h-12 rounded-full bg-emerald-100 border border-emerald-300 flex items-center justify-center text-2xl text-emerald-800 font-bold">
                       ✓
                     </div>
                     <div className="flex flex-col">
-                      <h4 className="font-['Space_Grotesk'] text-base font-bold text-white">
+                      <h4 className="font-['Space_Grotesk'] text-base font-bold text-emerald-950">
                         ACTION AUTHORIZED BY BUSINESS OWNER
                       </h4>
-                      <p className="text-xs text-[#a7f3d0] font-['Space_Grotesk']">
+                      <p className="text-xs text-emerald-800 font-['Space_Grotesk']">
                         Purchase order committed downstream to Supabase ERP ledger.
                       </p>
                     </div>
@@ -446,46 +446,46 @@ export const OperationsScreen: React.FC<OperationsScreenProps> = ({
                   <button
                     type="button"
                     onClick={() => onNavigate('dashboard')}
-                    className="px-4 py-2 bg-[#161822] text-white text-xs font-['Space_Grotesk'] font-semibold rounded-lg"
+                    className="px-4 py-2 bg-white text-[#111111] border border-[#E5E5E5] hover:bg-[#F5F5F5] text-xs font-['Space_Grotesk'] font-semibold rounded-lg cursor-pointer"
                   >
                     Go to Dashboard
                   </button>
                 </div>
               ) : (
                 <>
-                  <div className="flex items-center justify-between border-b border-[#dc2626]/30 pb-3">
+                  <div className="flex items-center justify-between border-b border-amber-200 pb-3">
                     <div className="flex items-center gap-2.5">
-                      <div className="w-3 h-3 rounded-full bg-[#dc2626] animate-ping" />
+                      <div className="w-3 h-3 rounded-full bg-amber-500" />
                       <div>
-                        <span className="text-[10px] font-['JetBrains_Mono'] uppercase tracking-widest text-[#fca5a5] font-bold block">
-                          CRITICAL POLICY GATE
+                        <span className="text-[10px] font-['JetBrains_Mono'] uppercase tracking-widest text-amber-900 font-bold block">
+                          Critical Policy Gate
                         </span>
-                        <h4 className="font-['Space_Grotesk'] text-sm font-bold text-white uppercase">
-                          BUSINESS OWNER APPROVAL REQUIRED
+                        <h4 className="font-['Space_Grotesk'] text-sm font-bold text-[#111111] uppercase">
+                          Business Owner Approval Required
                         </h4>
                       </div>
                     </div>
-                    <span className="px-2.5 py-0.5 rounded bg-[#dc2626] text-white text-xs font-['JetBrains_Mono'] font-bold">
+                    <span className="px-2.5 py-0.5 rounded bg-amber-200 text-amber-950 text-xs font-['JetBrains_Mono'] font-bold">
                       HIGH RISK // ACTION HALTED
                     </span>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="p-4 rounded-xl bg-[#090a0e] border border-[#1e222d] flex flex-col gap-1">
-                      <span className="text-[10px] font-['JetBrains_Mono'] uppercase text-[#8e95a5]">Proposed Transaction:</span>
-                      <span className="font-['Space_Grotesk'] text-base font-bold text-white">
-                        Create Purchase Order for National Logistics Hub
+                    <div className="p-4 rounded-xl bg-white border border-amber-200 flex flex-col gap-1">
+                      <span className="text-[10px] font-['JetBrains_Mono'] uppercase text-[#666666]">Proposed Transaction:</span>
+                      <span className="font-['Space_Grotesk'] text-base font-bold text-[#111111]">
+                        Create Purchase Order for {req?.supplier || 'National Logistics Hub'}
                       </span>
-                      <span className="font-['Space_Grotesk'] text-2xl font-bold text-[#fca5a5] mt-1">
-                        ₹18,500 <span className="text-xs font-normal text-[#8e95a5]">($34,800 USD)</span>
+                      <span className="font-['Space_Grotesk'] text-2xl font-bold text-[#111111] mt-1">
+                        {req?.amountFormatted || '₹18,500'}
                       </span>
                     </div>
 
-                    <div className="p-4 rounded-xl bg-[#090a0e] border border-[#1e222d] flex flex-col justify-between">
+                    <div className="p-4 rounded-xl bg-white border border-amber-200 flex flex-col justify-between">
                       <div className="flex flex-col gap-1">
-                        <span className="text-[10px] font-['JetBrains_Mono'] uppercase text-[#8e95a5]">Why is Owner Approval Needed?</span>
-                        <p className="text-xs text-[#cbd5e1] font-['Space_Grotesk'] leading-relaxed">
-                          Company policy <code className="text-[#38bdf8] font-['JetBrains_Mono']">RULE_POL_093</code> sets autonomous spending limit at <strong className="text-white">₹14,000</strong>. This order exceeds the threshold by <strong className="text-[#fca5a5]">₹4,500</strong>.
+                        <span className="text-[10px] font-['JetBrains_Mono'] uppercase text-[#666666]">Why is Owner Approval Needed?</span>
+                        <p className="text-xs text-[#444444] font-['Space_Grotesk'] leading-relaxed">
+                          Company policy <code className="text-[#111111] font-['JetBrains_Mono'] font-semibold">{req?.policyRule || 'RULE_POL_093'}</code> sets autonomous spending limit at <strong className="text-[#111111]">{req?.limitFormatted || '₹14,000'}</strong>. This order exceeds the threshold by <strong className="text-amber-900">{req?.varianceFormatted || '₹4,500'}</strong>.
                         </p>
                       </div>
                     </div>
@@ -496,7 +496,7 @@ export const OperationsScreen: React.FC<OperationsScreenProps> = ({
                     <button
                       type="button"
                       onClick={() => onNavigate('approvals')}
-                      className="px-5 py-2.5 bg-[#161822] hover:bg-[#202330] text-[#fca5a5] font-['Space_Grotesk'] text-xs font-bold uppercase rounded-xl border border-[#dc2626]/40 transition"
+                      className="px-5 py-2.5 bg-white hover:bg-[#F5F5F5] text-[#111111] font-['Space_Grotesk'] text-xs font-bold uppercase rounded-xl border border-[#E5E5E5] transition cursor-pointer"
                     >
                       View in Approval Center
                     </button>
@@ -505,7 +505,7 @@ export const OperationsScreen: React.FC<OperationsScreenProps> = ({
                       type="button"
                       onClick={handleQuickApprove}
                       disabled={isApproving}
-                      className="px-6 py-2.5 bg-gradient-to-r from-[#dc2626] to-[#b91c1c] hover:from-[#ef4444] hover:to-[#dc2626] text-white font-['Space_Grotesk'] text-xs font-bold uppercase rounded-xl shadow-[0_0_20px_rgba(220,38,38,0.5)] transition flex items-center gap-2 cursor-pointer"
+                      className="px-6 py-2.5 bg-[#111111] hover:bg-black text-white font-['Space_Grotesk'] text-xs font-bold uppercase rounded-xl shadow-xs transition flex items-center gap-2 cursor-pointer"
                     >
                       <span className="material-symbols-outlined text-[18px]">check</span>
                       <span>{isApproving ? 'Authorizing...' : 'Approve & Commit Order'}</span>
@@ -521,15 +521,15 @@ export const OperationsScreen: React.FC<OperationsScreenProps> = ({
 
       {/* VIEW 2: 6-STAGE TECHNICAL PIPELINE */}
       {activeView === 'pipeline' && (
-        <div className="bg-[#0f1117] p-6 lg:p-8 rounded-2xl border border-[#1e222d] shadow-xl flex flex-col gap-6 animate-in fade-in duration-200">
-          <div className="flex items-center justify-between border-b border-[#1a1c23] pb-4">
+        <div className="bg-white p-6 lg:p-8 rounded-xl border border-[#E5E5E5] shadow-xs flex flex-col gap-6 animate-in fade-in duration-200">
+          <div className="flex items-center justify-between border-b border-[#E5E5E5] pb-4">
             <div className="flex items-center gap-2">
-              <span className="material-symbols-outlined text-[#ef4444] text-[20px]">account_tree</span>
-              <h2 className="font-['Space_Grotesk'] text-base font-bold text-white uppercase tracking-wider">
-                END-TO-END WORKFLOW PIPELINE
+              <span className="material-symbols-outlined text-[#111111] text-[20px]">account_tree</span>
+              <h2 className="font-['Space_Grotesk'] text-base font-bold text-[#111111] uppercase tracking-wider">
+                End-to-End Workflow Pipeline
               </h2>
             </div>
-            <span className="text-[11px] font-['JetBrains_Mono'] text-[#8e95a5]">
+            <span className="text-[11px] font-['JetBrains_Mono'] text-[#666666]">
               Click any stage below to inspect telemetry
             </span>
           </div>
@@ -544,22 +544,22 @@ export const OperationsScreen: React.FC<OperationsScreenProps> = ({
                   onClick={() => setSelectedStage(stage.id)}
                   className={`p-4 rounded-xl border transition-all cursor-pointer flex flex-col justify-between gap-3 relative ${
                     isSelected
-                      ? 'bg-[#181a24] border-[#dc2626] shadow-[0_0_15px_rgba(220,38,38,0.25)]'
-                      : 'bg-[#0d0e13] border-[#1e222b] hover:border-[#2d3240]'
+                      ? 'bg-[#FAFAFA] border-[#111111] shadow-xs'
+                      : 'bg-white border-[#E5E5E5] hover:border-[#CCCCCC]'
                   }`}
                 >
                   <div className="flex items-center justify-between">
-                    <span className="font-['JetBrains_Mono'] text-[10px] text-[#64748b] font-bold">
+                    <span className="font-['JetBrains_Mono'] text-[10px] text-[#888888] font-bold">
                       0{idx + 1}
                     </span>
                     <span className={`text-[9px] font-['JetBrains_Mono'] font-bold px-1.5 py-0.5 rounded ${
                       stage.statusType === 'danger'
-                        ? 'bg-[#dc2626]/20 text-[#fca5a5] border border-[#dc2626]/40 animate-pulse'
+                        ? 'bg-amber-100 text-amber-900 border border-amber-300'
                         : stage.statusType === 'warning'
-                        ? 'bg-[#f59e0b]/20 text-[#fcd34d] border border-[#f59e0b]/40'
+                        ? 'bg-amber-50 text-amber-800 border border-amber-200'
                         : stage.statusType === 'pending'
-                        ? 'bg-[#64748b]/20 text-[#94a3b8]'
-                        : 'bg-[#10b981]/15 text-[#34d399] border border-[#10b981]/30'
+                        ? 'bg-[#F5F5F5] text-[#666666] border border-[#E5E5E5]'
+                        : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                     }`}>
                       {stage.status}
                     </span>
@@ -568,50 +568,50 @@ export const OperationsScreen: React.FC<OperationsScreenProps> = ({
                   <div className="flex flex-col gap-1">
                     <div className="flex items-center gap-1.5">
                       <span className={`material-symbols-outlined text-[18px] ${
-                        isSelected ? 'text-[#ef4444]' : 'text-[#8e95a5]'
+                        isSelected ? 'text-[#111111]' : 'text-[#666666]'
                       }`}>
                         {stage.icon}
                       </span>
-                      <span className="font-['Space_Grotesk'] text-xs font-bold text-white tracking-wider">
+                      <span className="font-['Space_Grotesk'] text-xs font-bold text-[#111111] tracking-wider">
                         {stage.title}
                       </span>
                     </div>
-                    <p className="text-[11px] font-['Space_Grotesk'] text-[#8e95a5] line-clamp-2 leading-tight">
+                    <p className="text-[11px] font-['Space_Grotesk'] text-[#666666] line-clamp-2 leading-tight">
                       {stage.shortDesc}
                     </p>
                   </div>
 
                   {isSelected && (
-                    <div className="absolute -bottom-[1px] left-4 right-4 h-[2px] bg-[#dc2626]" />
+                    <div className="absolute -bottom-[1px] left-4 right-4 h-[2px] bg-[#111111]" />
                   )}
                 </div>
               );
             })}
           </div>
 
-          {/* STAGE DETAIL INSPECTOR (Expandable Section) */}
-          <div className="p-6 rounded-xl bg-[#090a0e] border border-[#1e222b] flex flex-col gap-5 mt-2 animate-in fade-in duration-200">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#161822] pb-3">
+          {/* STAGE DETAIL INSPECTOR */}
+          <div className="p-6 rounded-xl bg-[#FAFAFA] border border-[#E5E5E5] flex flex-col gap-5 mt-2 animate-in fade-in duration-200">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#E5E5E5] pb-3">
               <div className="flex items-center gap-2">
-                <span className="material-symbols-outlined text-[#ef4444] text-[20px]">
+                <span className="material-symbols-outlined text-[#111111] text-[20px]">
                   {currentStageInfo.icon}
                 </span>
-                <h3 className="font-['Space_Grotesk'] text-sm font-bold text-white uppercase tracking-wider">
-                  STAGE 0{currentStageInfo.id + 1} // {currentStageInfo.details.title}
+                <h3 className="font-['Space_Grotesk'] text-sm font-bold text-[#111111] uppercase tracking-wider">
+                  Stage 0{currentStageInfo.id + 1} // {currentStageInfo.details.title}
                 </h3>
               </div>
-              <span className="text-[11px] font-['JetBrains_Mono'] text-[#10b981]">
+              <span className="text-[11px] font-['JetBrains_Mono'] text-emerald-700 font-semibold">
                 Live Enclave Verification Active
               </span>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
               {currentStageInfo.details.meta.map((m, idx) => (
-                <div key={idx} className="p-3 rounded-lg bg-[#101217] border border-[#1e222b] flex flex-col">
-                  <span className="text-[10px] font-['JetBrains_Mono'] text-[#64748b] uppercase tracking-wider">
+                <div key={idx} className="p-3 rounded-lg bg-white border border-[#E5E5E5] flex flex-col">
+                  <span className="text-[10px] font-['JetBrains_Mono'] text-[#666666] uppercase tracking-wider">
                     {m.label}
                   </span>
-                  <span className="font-['JetBrains_Mono'] text-xs font-semibold text-white mt-1 break-words">
+                  <span className="font-['JetBrains_Mono'] text-xs font-semibold text-[#111111] mt-1 break-words">
                     {m.value}
                   </span>
                 </div>
@@ -620,30 +620,30 @@ export const OperationsScreen: React.FC<OperationsScreenProps> = ({
 
             {currentStageInfo.details.toolCalls && (
               <div className="flex flex-col gap-3 pt-2">
-                <span className="text-[11px] font-['JetBrains_Mono'] uppercase tracking-wider text-[#8e95a5] font-semibold">
-                  TOOL EXECUTION TRACE &amp; RPC OUTPUTS:
+                <span className="text-[11px] font-['JetBrains_Mono'] uppercase tracking-wider text-[#666666] font-semibold">
+                  Tool Execution Trace &amp; RPC Outputs:
                 </span>
 
                 <div className="flex flex-col gap-3">
                   {currentStageInfo.details.toolCalls.map((tc, idx) => (
-                    <div key={idx} className="p-4 rounded-xl bg-[#101217] border border-[#1e222b] flex flex-col gap-2">
+                    <div key={idx} className="p-4 rounded-xl bg-white border border-[#E5E5E5] flex flex-col gap-2">
                       <div className="flex items-center justify-between">
-                        <span className="font-['JetBrains_Mono'] text-xs font-bold text-[#38bdf8]">
+                        <span className="font-['JetBrains_Mono'] text-xs font-bold text-[#111111]">
                           TOOL CALL: {tc.name}()
                         </span>
-                        <span className="text-[10px] font-['JetBrains_Mono'] px-2 py-0.5 rounded bg-[#10b981]/15 text-[#34d399]">
+                        <span className="text-[10px] font-['JetBrains_Mono'] px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 font-medium">
                           ✓ Success
                         </span>
                       </div>
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1 text-xs font-['JetBrains_Mono']">
-                        <div className="p-2.5 rounded bg-[#07080b] border border-[#1a1c24]">
-                          <span className="text-[#64748b] text-[10px] block mb-0.5 uppercase">Input Payload:</span>
-                          <code className="text-[#cbd5e1]">{tc.input}</code>
+                        <div className="p-2.5 rounded bg-[#FAFAFA] border border-[#E5E5E5]">
+                          <span className="text-[#666666] text-[10px] block mb-0.5 uppercase">Input Payload:</span>
+                          <code className="text-[#111111]">{tc.input}</code>
                         </div>
-                        <div className="p-2.5 rounded bg-[#07080b] border border-[#1a1c24]">
-                          <span className="text-[#64748b] text-[10px] block mb-0.5 uppercase">Deterministic Output:</span>
-                          <code className="text-[#34d399]">{tc.output}</code>
+                        <div className="p-2.5 rounded bg-[#FAFAFA] border border-[#E5E5E5]">
+                          <span className="text-[#666666] text-[10px] block mb-0.5 uppercase">Deterministic Output:</span>
+                          <code className="text-[#111111] font-semibold">{tc.output}</code>
                         </div>
                       </div>
                     </div>

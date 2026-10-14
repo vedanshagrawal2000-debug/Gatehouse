@@ -107,26 +107,26 @@ export const AgentsScreen: React.FC<AgentsScreenProps> = ({
     <div className="w-full max-w-[1500px] mx-auto px-6 lg:px-10 py-8 flex flex-col gap-8">
       
       {/* Top Header & Metrics Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#1a1c23] pb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#E5E5E5] pb-6">
         <div className="flex flex-col gap-1">
           <div className="flex items-center gap-2">
-            <span className="material-symbols-outlined text-[#38bdf8] text-[22px]">smart_toy</span>
-            <h1 className="font-['Space_Grotesk'] text-2xl sm:text-3xl font-bold text-white tracking-tight">
-              AI AGENTS DIRECTORY
+            <span className="material-symbols-outlined text-[#111111] text-[22px]">smart_toy</span>
+            <h1 className="font-['Space_Grotesk'] text-2xl sm:text-3xl font-bold text-[#111111] tracking-tight uppercase">
+              AI Agents Directory
             </h1>
           </div>
-          <p className="font-['Space_Grotesk'] text-xs sm:text-sm text-[#8e95a5]">
+          <p className="font-['Space_Grotesk'] text-xs sm:text-sm text-[#666666]">
             Specialized autonomous workers deployed in company sandboxes with fail-safe human gating.
           </p>
         </div>
 
         <div className="flex items-center gap-3">
-          <div className="px-3.5 py-1.5 rounded-lg bg-[#101217] border border-[#1e222b] flex items-center gap-2 font-['JetBrains_Mono'] text-xs">
-            <span className="w-2 h-2 rounded-full bg-[#10b981] animate-pulse" />
-            <span className="text-[#94a3b8]">3 Online</span>
+          <div className="px-3.5 py-1.5 rounded-lg bg-white border border-[#E5E5E5] flex items-center gap-2 font-['JetBrains_Mono'] text-xs">
+            <span className="w-2 h-2 rounded-full bg-emerald-500" />
+            <span className="text-[#111111] font-semibold">3 Online</span>
           </div>
-          <div className="px-3.5 py-1.5 rounded-lg bg-[#101217] border border-[#1e222b] flex items-center gap-2 font-['JetBrains_Mono'] text-xs">
-            <span className="text-[#38bdf8]">268 Tasks</span>
+          <div className="px-3.5 py-1.5 rounded-lg bg-white border border-[#E5E5E5] flex items-center gap-2 font-['JetBrains_Mono'] text-xs">
+            <span className="text-[#666666]">268 Tasks Run</span>
           </div>
         </div>
       </div>
@@ -136,41 +136,41 @@ export const AgentsScreen: React.FC<AgentsScreenProps> = ({
         {agents.map((agent) => (
           <div
             key={agent.code}
-            className="bg-[#101217] rounded-2xl border border-[#1e222b] hover:border-[#383d4f] transition flex flex-col justify-between shadow-xl overflow-hidden group"
+            className="bg-white rounded-xl border border-[#E5E5E5] hover:border-[#CCCCCC] transition flex flex-col justify-between shadow-xs overflow-hidden group"
           >
             {/* Card Header */}
-            <div className="p-6 border-b border-[#1a1c23] flex flex-col gap-3">
+            <div className="p-6 border-b border-[#E5E5E5] flex flex-col gap-3">
               <div className="flex items-center justify-between">
-                <span className="font-['JetBrains_Mono'] text-xs text-[#8e95a5] px-2 py-0.5 rounded bg-[#181a24] border border-[#272b38]">
+                <span className="font-['JetBrains_Mono'] text-xs text-[#666666] px-2 py-0.5 rounded bg-[#FAFAFA] border border-[#E5E5E5]">
                   {agent.code}
                 </span>
 
                 <div className="flex items-center gap-2">
                   <span className={`text-[10px] font-['JetBrains_Mono'] font-bold px-2 py-0.5 rounded-full ${
                     agent.riskLevel === 'HIGH'
-                      ? 'bg-[#dc2626]/20 text-[#fca5a5] border border-[#dc2626]/40'
-                      : 'bg-[#f59e0b]/20 text-[#fcd34d] border border-[#f59e0b]/40'
+                      ? 'bg-amber-100 text-amber-900 border border-amber-300'
+                      : 'bg-amber-50 text-amber-800 border border-amber-200'
                   }`}>
                     RISK: {agent.riskLevel}
                   </span>
 
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#10b981]/15 text-[#34d399] border border-[#10b981]/30">
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#10b981] animate-pulse" />
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                     {agent.status}
                   </span>
                 </div>
               </div>
 
               <div className="flex flex-col gap-1 mt-1">
-                <h2 className="font-['Space_Grotesk'] text-xl font-bold text-white group-hover:text-[#38bdf8] transition tracking-tight">
+                <h2 className="font-['Space_Grotesk'] text-xl font-bold text-[#111111] group-hover:text-black transition tracking-tight">
                   {agent.name}
                 </h2>
-                <span className="text-xs font-['JetBrains_Mono'] text-[#38bdf8]">
+                <span className="text-xs font-['JetBrains_Mono'] text-[#666666]">
                   {agent.role}
                 </span>
               </div>
 
-              <p className="font-['Space_Grotesk'] text-xs text-[#8e95a5] leading-relaxed line-clamp-3">
+              <p className="font-['Space_Grotesk'] text-xs text-[#555555] leading-relaxed line-clamp-3">
                 {agent.description}
               </p>
             </div>
@@ -178,27 +178,27 @@ export const AgentsScreen: React.FC<AgentsScreenProps> = ({
             {/* Card Stats & Tools */}
             <div className="p-6 flex flex-col gap-4">
               {/* Metrics */}
-              <div className="grid grid-cols-2 gap-3 p-3 rounded-xl bg-[#0a0b0e] border border-[#1a1c23] font-['JetBrains_Mono'] text-xs">
+              <div className="grid grid-cols-2 gap-3 p-3 rounded-xl bg-[#FAFAFA] border border-[#E5E5E5] font-['JetBrains_Mono'] text-xs">
                 <div>
-                  <span className="text-[#64748b] block text-[10px] uppercase">Tasks Run</span>
-                  <span className="font-bold text-white text-sm">{agent.tasksCompleted}</span>
+                  <span className="text-[#666666] block text-[10px] uppercase">Tasks Run</span>
+                  <span className="font-bold text-[#111111] text-sm">{agent.tasksCompleted}</span>
                 </div>
                 <div>
-                  <span className="text-[#64748b] block text-[10px] uppercase">Success</span>
-                  <span className="font-bold text-[#10b981] text-sm">{agent.successRate}</span>
+                  <span className="text-[#666666] block text-[10px] uppercase">Success</span>
+                  <span className="font-bold text-emerald-700 text-sm">{agent.successRate}</span>
                 </div>
               </div>
 
               {/* Tools Available */}
               <div className="flex flex-col gap-1.5">
-                <span className="text-[10px] font-['JetBrains_Mono'] uppercase tracking-wider text-[#64748b]">
+                <span className="text-[10px] font-['JetBrains_Mono'] uppercase tracking-wider text-[#666666]">
                   Tools Available:
                 </span>
                 <div className="flex flex-wrap gap-1.5">
                   {agent.tools.map((t) => (
                     <span
                       key={t.name}
-                      className="text-[11px] font-['JetBrains_Mono'] px-2.5 py-1 rounded-md bg-[#161822] text-[#cbd5e1] border border-[#232738]"
+                      className="text-[11px] font-['JetBrains_Mono'] px-2.5 py-1 rounded-md bg-[#FAFAFA] text-[#111111] border border-[#E5E5E5]"
                     >
                       {t.name}()
                     </span>
@@ -214,7 +214,7 @@ export const AgentsScreen: React.FC<AgentsScreenProps> = ({
                     setSelectedAgent(agent);
                     setDetailTab('overview');
                   }}
-                  className="w-full py-2.5 bg-[#161822] hover:bg-[#202331] text-[#cbd5e1] hover:text-white font-['Space_Grotesk'] text-xs font-semibold rounded-lg border border-[#232738] transition cursor-pointer flex items-center justify-center gap-1"
+                  className="w-full py-2.5 bg-white hover:bg-[#F5F5F5] text-[#111111] font-['Space_Grotesk'] text-xs font-semibold rounded-lg border border-[#E5E5E5] transition cursor-pointer flex items-center justify-center gap-1"
                 >
                   <span className="material-symbols-outlined text-[16px]">visibility</span>
                   <span>View Agent</span>
@@ -223,7 +223,7 @@ export const AgentsScreen: React.FC<AgentsScreenProps> = ({
                 <button
                   type="button"
                   onClick={() => handleAssign(agent.defaultPrompt)}
-                  className="w-full py-2.5 bg-[#dc2626] hover:bg-[#b91c1c] text-white font-['Space_Grotesk'] text-xs font-bold rounded-lg shadow-[0_0_12px_rgba(220,38,38,0.35)] transition cursor-pointer flex items-center justify-center gap-1"
+                  className="w-full py-2.5 bg-[#111111] hover:bg-black text-white font-['Space_Grotesk'] text-xs font-bold rounded-lg shadow-xs transition cursor-pointer flex items-center justify-center gap-1"
                 >
                   <span className="material-symbols-outlined text-[16px]">play_arrow</span>
                   <span>Assign</span>
@@ -237,25 +237,25 @@ export const AgentsScreen: React.FC<AgentsScreenProps> = ({
 
       {/* AGENT DETAIL MODAL */}
       {selectedAgent && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-[#101217] w-full max-w-2xl rounded-2xl border border-[#2d3240] shadow-2xl overflow-hidden flex flex-col animate-in fade-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+          <div className="bg-white w-full max-w-2xl rounded-2xl border border-[#E5E5E5] shadow-2xl overflow-hidden flex flex-col animate-in fade-in zoom-in-95 duration-200">
             
             {/* Modal Header */}
-            <div className="p-6 border-b border-[#1a1c23] flex items-center justify-between bg-[#0a0b0e]">
+            <div className="p-6 border-b border-[#E5E5E5] flex items-center justify-between bg-[#FAFAFA]">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-[#181a24] border border-[#272b38] flex items-center justify-center text-[#38bdf8]">
+                <div className="w-10 h-10 rounded-xl bg-white border border-[#E5E5E5] flex items-center justify-center text-[#111111]">
                   <span className="material-symbols-outlined text-[22px]">smart_toy</span>
                 </div>
                 <div className="flex flex-col">
                   <div className="flex items-center gap-2">
-                    <h3 className="font-['Space_Grotesk'] text-lg font-bold text-white">
+                    <h3 className="font-['Space_Grotesk'] text-lg font-bold text-[#111111]">
                       {selectedAgent.name}
                     </h3>
-                    <span className="text-[10px] font-['JetBrains_Mono'] px-2 py-0.5 rounded bg-[#10b981]/15 text-[#34d399]">
+                    <span className="text-[10px] font-['JetBrains_Mono'] px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 font-semibold">
                       Online
                     </span>
                   </div>
-                  <span className="text-xs text-[#8e95a5] font-['JetBrains_Mono']">
+                  <span className="text-xs text-[#666666] font-['JetBrains_Mono']">
                     {selectedAgent.code} // {selectedAgent.role}
                   </span>
                 </div>
@@ -264,14 +264,14 @@ export const AgentsScreen: React.FC<AgentsScreenProps> = ({
               <button
                 type="button"
                 onClick={() => setSelectedAgent(null)}
-                className="w-8 h-8 rounded-lg bg-[#181a24] text-[#8e95a5] hover:text-white flex items-center justify-center transition"
+                className="w-8 h-8 rounded-lg bg-white border border-[#E5E5E5] text-[#666666] hover:text-[#111111] flex items-center justify-center transition cursor-pointer"
               >
                 ✕
               </button>
             </div>
 
             {/* Modal Navigation Tabs */}
-            <div className="flex items-center border-b border-[#1a1c23] bg-[#0c0e13] px-6">
+            <div className="flex items-center border-b border-[#E5E5E5] bg-[#FAFAFA] px-6">
               {[
                 { id: 'overview', label: 'Overview' },
                 { id: 'tools', label: 'Tools & RPCs' },
@@ -281,10 +281,10 @@ export const AgentsScreen: React.FC<AgentsScreenProps> = ({
                 <button
                   key={tab.id}
                   onClick={() => setDetailTab(tab.id as any)}
-                  className={`px-4 py-3 text-xs font-['Space_Grotesk'] font-semibold transition border-b-2 ${
+                  className={`px-4 py-3 text-xs font-['Space_Grotesk'] font-semibold transition border-b-2 cursor-pointer ${
                     detailTab === tab.id
-                      ? 'border-[#dc2626] text-white'
-                      : 'border-transparent text-[#64748b] hover:text-[#94a3b8]'
+                      ? 'border-[#111111] text-[#111111]'
+                      : 'border-transparent text-[#666666] hover:text-[#111111]'
                   }`}
                 >
                   {tab.label}
@@ -293,27 +293,27 @@ export const AgentsScreen: React.FC<AgentsScreenProps> = ({
             </div>
 
             {/* Modal Content Body */}
-            <div className="p-6 flex flex-col gap-4 font-['Space_Grotesk'] text-xs text-[#cbd5e1] max-h-[60vh] overflow-y-auto">
+            <div className="p-6 flex flex-col gap-4 font-['Space_Grotesk'] text-xs text-[#333333] max-h-[60vh] overflow-y-auto">
               
               {detailTab === 'overview' && (
                 <div className="flex flex-col gap-4">
                   <div>
-                    <span className="text-[10px] font-['JetBrains_Mono'] uppercase text-[#64748b] block mb-1">
+                    <span className="text-[10px] font-['JetBrains_Mono'] uppercase text-[#666666] block mb-1">
                       Agent Purpose &amp; Domain
                     </span>
-                    <p className="text-sm text-white leading-relaxed">
+                    <p className="text-sm text-[#111111] leading-relaxed">
                       {selectedAgent.description}
                     </p>
                   </div>
 
                   <div className="grid grid-cols-2 gap-4 pt-2">
-                    <div className="p-3 rounded-lg bg-[#07080b] border border-[#1a1c23]">
-                      <span className="text-[10px] font-['JetBrains_Mono'] text-[#64748b] block">LLM BACKBONE</span>
-                      <span className="font-bold text-white text-sm font-['JetBrains_Mono']">Gemini 2.5 Flash</span>
+                    <div className="p-3 rounded-lg bg-[#FAFAFA] border border-[#E5E5E5]">
+                      <span className="text-[10px] font-['JetBrains_Mono'] text-[#666666] block">LLM BACKBONE</span>
+                      <span className="font-bold text-[#111111] text-sm font-['JetBrains_Mono']">Gemini 2.5 Flash</span>
                     </div>
-                    <div className="p-3 rounded-lg bg-[#07080b] border border-[#1a1c23]">
-                      <span className="text-[10px] font-['JetBrains_Mono'] text-[#64748b] block">ENCLAVE ISOLATION</span>
-                      <span className="font-bold text-[#10b981] text-sm font-['JetBrains_Mono']">Deterministic Sandbox</span>
+                    <div className="p-3 rounded-lg bg-[#FAFAFA] border border-[#E5E5E5]">
+                      <span className="text-[10px] font-['JetBrains_Mono'] text-[#666666] block">ENCLAVE ISOLATION</span>
+                      <span className="font-bold text-emerald-700 text-sm font-['JetBrains_Mono']">Deterministic Sandbox</span>
                     </div>
                   </div>
                 </div>
@@ -321,22 +321,22 @@ export const AgentsScreen: React.FC<AgentsScreenProps> = ({
 
               {detailTab === 'tools' && (
                 <div className="flex flex-col gap-3">
-                  <span className="text-[10px] font-['JetBrains_Mono'] uppercase text-[#64748b]">
+                  <span className="text-[10px] font-['JetBrains_Mono'] uppercase text-[#666666]">
                     Connected RPC Tools
                   </span>
                   {selectedAgent.tools.map((t) => (
-                    <div key={t.name} className="p-3 rounded-lg bg-[#07080b] border border-[#1a1c23] flex flex-col gap-1">
+                    <div key={t.name} className="p-3 rounded-lg bg-[#FAFAFA] border border-[#E5E5E5] flex flex-col gap-1">
                       <div className="flex items-center justify-between">
-                        <span className="font-['JetBrains_Mono'] font-bold text-white text-sm">
+                        <span className="font-['JetBrains_Mono'] font-bold text-[#111111] text-sm">
                           {t.name}()
                         </span>
-                        <span className={`text-[10px] font-['JetBrains_Mono'] px-2 py-0.5 rounded ${
-                          t.type === 'Sensitive' ? 'bg-[#dc2626]/20 text-[#fca5a5]' : 'bg-[#38bdf8]/15 text-[#38bdf8]'
+                        <span className={`text-[10px] font-['JetBrains_Mono'] px-2 py-0.5 rounded font-medium ${
+                          t.type === 'Sensitive' ? 'bg-amber-100 text-amber-900 border border-amber-300' : 'bg-white text-[#111111] border border-[#E5E5E5]'
                         }`}>
                           {t.type}
                         </span>
                       </div>
-                      <span className="text-[#8e95a5] text-xs">
+                      <span className="text-[#666666] text-xs">
                         {t.desc}
                       </span>
                     </div>
@@ -346,38 +346,38 @@ export const AgentsScreen: React.FC<AgentsScreenProps> = ({
 
               {detailTab === 'permissions' && (
                 <div className="flex flex-col gap-4">
-                  <div className="p-4 rounded-xl bg-[#140f11] border border-[#dc2626]/30 flex flex-col gap-2">
-                    <span className="text-[10px] font-['JetBrains_Mono'] uppercase text-[#fca5a5] font-bold">
+                  <div className="p-4 rounded-xl bg-amber-50/70 border border-amber-300 flex flex-col gap-2">
+                    <span className="text-[10px] font-['JetBrains_Mono'] uppercase text-amber-900 font-bold">
                       Autonomous Financial Ceiling
                     </span>
-                    <span className="font-['Space_Grotesk'] text-2xl font-bold text-white">
+                    <span className="font-['Space_Grotesk'] text-2xl font-bold text-[#111111]">
                       {selectedAgent.autonomousLimit}
                     </span>
-                    <span className="text-xs text-[#8e95a5]">
+                    <span className="text-xs text-[#555555]">
                       Any transaction or order exceeding this ceiling requires mandatory human biometric sign-off.
                     </span>
                   </div>
 
-                  <div className="p-3 rounded-lg bg-[#07080b] border border-[#1a1c23] flex flex-col gap-1">
-                    <span className="text-[10px] font-['JetBrains_Mono'] text-[#64748b]">ENFORCED POLICY RULE</span>
-                    <span className="font-['JetBrains_Mono'] text-white font-semibold">{selectedAgent.policyRule}</span>
+                  <div className="p-3 rounded-lg bg-[#FAFAFA] border border-[#E5E5E5] flex flex-col gap-1">
+                    <span className="text-[10px] font-['JetBrains_Mono'] text-[#666666]">ENFORCED POLICY RULE</span>
+                    <span className="font-['JetBrains_Mono'] text-[#111111] font-semibold">{selectedAgent.policyRule}</span>
                   </div>
                 </div>
               )}
 
               {detailTab === 'activity' && (
                 <div className="flex flex-col gap-2">
-                  <span className="text-[10px] font-['JetBrains_Mono'] uppercase text-[#64748b]">
+                  <span className="text-[10px] font-['JetBrains_Mono'] uppercase text-[#666666]">
                     Recent Directives
                   </span>
                   {selectedAgent.recentMissions.map((m, idx) => (
-                    <div key={idx} className="p-3 rounded-lg bg-[#07080b] border border-[#1a1c23] flex items-center justify-between">
+                    <div key={idx} className="p-3 rounded-lg bg-[#FAFAFA] border border-[#E5E5E5] flex items-center justify-between">
                       <div className="flex flex-col">
-                        <span className="text-white font-medium">{m.mission}</span>
-                        <span className="text-[10px] text-[#64748b] font-['JetBrains_Mono']">{m.time}</span>
+                        <span className="text-[#111111] font-medium">{m.mission}</span>
+                        <span className="text-[10px] text-[#666666] font-['JetBrains_Mono']">{m.time}</span>
                       </div>
-                      <span className={`text-[10px] font-['JetBrains_Mono'] px-2 py-0.5 rounded ${
-                        m.status === 'Completed' ? 'bg-[#10b981]/15 text-[#34d399]' : 'bg-[#dc2626]/20 text-[#fca5a5]'
+                      <span className={`text-[10px] font-['JetBrains_Mono'] px-2 py-0.5 rounded font-medium ${
+                        m.status === 'Completed' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-amber-100 text-amber-900 border border-amber-300'
                       }`}>
                         {m.status}
                       </span>
@@ -389,11 +389,11 @@ export const AgentsScreen: React.FC<AgentsScreenProps> = ({
             </div>
 
             {/* Modal Footer */}
-            <div className="p-4 border-t border-[#1a1c23] bg-[#0a0b0e] flex items-center justify-end gap-3">
+            <div className="p-4 border-t border-[#E5E5E5] bg-[#FAFAFA] flex items-center justify-end gap-3">
               <button
                 type="button"
                 onClick={() => setSelectedAgent(null)}
-                className="px-4 py-2 bg-[#181a24] hover:bg-[#202330] text-[#cbd5e1] font-['Space_Grotesk'] text-xs font-semibold rounded-lg transition"
+                className="px-4 py-2 bg-white hover:bg-[#F5F5F5] text-[#111111] font-['Space_Grotesk'] text-xs font-semibold rounded-lg border border-[#E5E5E5] transition cursor-pointer"
               >
                 Close
               </button>
@@ -404,7 +404,7 @@ export const AgentsScreen: React.FC<AgentsScreenProps> = ({
                   setSelectedAgent(null);
                   handleAssign(p);
                 }}
-                className="px-5 py-2 bg-[#dc2626] hover:bg-[#b91c1c] text-white font-['Space_Grotesk'] text-xs font-bold rounded-lg transition flex items-center gap-1.5 shadow-[0_0_12px_rgba(220,38,38,0.4)]"
+                className="px-5 py-2 bg-[#111111] hover:bg-black text-white font-['Space_Grotesk'] text-xs font-bold rounded-lg transition flex items-center gap-1.5 shadow-xs cursor-pointer"
               >
                 <span>Dispatch Mission</span>
                 <span className="material-symbols-outlined text-[16px]">arrow_forward</span>

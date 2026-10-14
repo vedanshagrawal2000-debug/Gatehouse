@@ -39,24 +39,31 @@ async function runVerification() {
   });
 
   const migrationsDir = path.join(__dirname, '..', 'supabase', 'migrations');
-  const schemaSql = fs.readFileSync(path.join(migrationsDir, '20261004000001_create_gatehouse_schema.sql'), 'utf-8');
-  const seedSql = fs.readFileSync(path.join(migrationsDir, '20261004000002_seed_demo_data.sql'), 'utf-8');
+  const migrationFiles = fs.readdirSync(migrationsDir).filter(f => f.endsWith('.sql')).sort();
 
-  console.log('[1/4] Applying 20261004000001_create_gatehouse_schema.sql ...');
-  // Strip extension, rule, and plpgsql statements for pg-mem in-memory testing
-  const cleanedSchema = schemaSql
-    .replace(/CREATE EXTENSION IF NOT EXISTS [^;]+;/gi, '-- EXTENSION')
-    .replace(/CREATE OR REPLACE RULE[\s\S]*?DO INSTEAD NOTHING;/gi, '-- RULE')
-    .replace(/CREATE OR REPLACE FUNCTION[\s\S]*?LANGUAGE plpgsql;/gi, '-- FUNCTION')
-    .replace(/DROP TRIGGER IF EXISTS[^;]+;/gi, '-- DROP TRIGGER')
-    .replace(/CREATE TRIGGER[\s\S]*?EXECUTE FUNCTION[^;]+;/gi, '-- TRIGGER');
-  
-  db.public.none(cleanedSchema);
-  console.log('  -> All 7 tables, constraints, foreign keys, and indexes applied successfully!\n');
+  function cleanSqlForPgMem(sql) {
+    return sql
+      .replace(/CREATE EXTENSION IF NOT EXISTS [^;]+;/gi, '-- EXTENSION')
+      .replace(/CREATE OR REPLACE RULE[\s\S]*?DO INSTEAD NOTHING;/gi, '-- RULE')
+      .replace(/CREATE OR REPLACE FUNCTION[\s\S]*?LANGUAGE plpgsql;/gi, '-- FUNCTION')
+      .replace(/DROP TRIGGER IF EXISTS[^;]+;/gi, '-- DROP TRIGGER')
+      .replace(/CREATE TRIGGER[\s\S]*?EXECUTE FUNCTION[^;]+;/gi, '-- TRIGGER')
+      .replace(/ALTER TABLE [^;]+ ENABLE ROW LEVEL SECURITY;/gi, '-- RLS')
+      .replace(/DO \$\$[\s\S]*?\$\$ LANGUAGE plpgsql;/gi, '-- DO PLPGSQL')
+      .replace(/DO \$\$[\s\S]*?\$\$;/gi, '-- DO BLOCK');
+  }
 
-  console.log('[2/4] Applying 20261004000002_seed_demo_data.sql ...');
-  db.public.none(seedSql);
-  console.log('  -> Seed data inserted successfully!\n');
+  console.log(`Discovered ${migrationFiles.length} migration files in supabase/migrations:`);
+  migrationFiles.forEach(f => console.log(`  • ${f}`));
+  console.log('');
+
+  migrationFiles.forEach((f, idx) => {
+    console.log(`[${idx + 1}/${migrationFiles.length}] Applying ${f} ...`);
+    const sql = fs.readFileSync(path.join(migrationsDir, f), 'utf-8');
+    const cleaned = cleanSqlForPgMem(sql);
+    db.public.none(cleaned);
+    console.log(`  -> ${f} applied successfully!\n`);
+  });
 
   console.log('[3/4] Verifying Required Demonstrations & Queries ...\n');
 

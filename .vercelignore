@@ -1,0 +1,10 @@
+# Vercel Deployment Ignore Configuration
+# Gatehouse Monorepo: Frontend is deployed to Vercel, Backend to Render.
+
+# NEVER deploy or build Python backend on Vercel
+apps/api/
+backend/
+*.py
+requirements.txt
+render.yaml
+supabase/

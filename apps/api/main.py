@@ -39,13 +39,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Standard Production Health Probe
-@app.get("/health", tags=["Health"])
-def health_check():
-    """Production health check probe for Render and uptime monitoring."""
-    return {"status": "ok"}
-
-
 # Register routers
 app.include_router(health_router)
 app.include_router(telemetry_router)

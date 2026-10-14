@@ -108,6 +108,21 @@ export interface ApprovalRequest {
   recipientEmail?: string;
   isStarred?: boolean;
   isRead?: boolean;
+  supplier?: string;
+  supplierCode?: string;
+  supplierAddress?: string;
+  poNumber?: string;
+  invoiceNumber?: string;
+  transactionId?: string;
+  subtotal?: number;
+  gst?: number;
+  shipping?: number;
+  total?: number;
+  subtotalFormatted?: string;
+  gstFormatted?: string;
+  shippingFormatted?: string;
+  limitFormatted?: string;
+  varianceFormatted?: string;
 }
 
 export interface Company {

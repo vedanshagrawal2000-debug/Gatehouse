@@ -1,10 +1,9 @@
 'use client';
 
 /**
- * GATEHOUSE - Balanced AI Operations Control Room
- * Clean, enterprise SaaS interface with cinematic dark command center aesthetics:
- * Mentors understand in 10 seconds:
- * User gives mission -> AI Agent works -> Tools execute -> Policy Check -> Human approval -> Result
+ * GATEHOUSE - Enterprise AI Governance & Operations Platform
+ * Clean, minimalist black-and-white SaaS command center.
+ * Core workflow: Objective -> AI Strategy & Agent Allocation -> Tool Execution -> Policy Check -> Human Approval -> Downstream Commit
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -90,8 +89,8 @@ export default function HomePage() {
   const pendingCount = approvals.filter((a) => a.status === 'PENDING').length;
 
   return (
-    <div className="bg-[#07080a] text-[#e2e8f0] min-h-screen flex selection:bg-[#dc2626] selection:text-white">
-      {/* 5-Item Clean Command Center Sidebar */}
+    <div className="bg-[#FAFAFA] text-[#111111] min-h-screen flex selection:bg-[#111111] selection:text-white">
+      {/* Professional SaaS Navigation Sidebar */}
       <Sidebar
         currentTab={currentTab}
         onSelectTab={setCurrentTab}

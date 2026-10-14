@@ -62,3 +62,29 @@ The frontend communicates with the backend via two complementary mechanisms:
    - Dispatch an example directive (e.g. "Check low-stock products and prepare a restock order").
    - Confirm the AI Strategist Architecture generates the phased roadmap and company agents.
    - Navigate to the **Approvals** tab and confirm Gmail-style approval inbox displays pending items.
+
+---
+
+## ⚠️ Troubleshooting: Vercel Shows FastAPI JSON Response
+
+If your Vercel URL displays the FastAPI JSON:
+```json
+{
+  "service": "GATEHOUSE Tactical Operations API",
+  "status": "operational"
+}
+```
+
+### Why this happens:
+In a monorepo containing both `apps/api` (FastAPI) and `apps/web` (Next.js), Vercel may auto-detect `apps/api` or default to it if the project's **Root Directory** was not explicitly configured to `apps/web`. Vercel automatically deploys Python apps when it finds `main.py` and `requirements.txt`.
+
+### How to Fix:
+1. Open the [Vercel Dashboard](https://vercel.com/dashboard) and navigate to your project.
+2. Go to **Settings** → **General**.
+3. Under **Build & Development Settings**, locate **Root Directory**.
+4. Click **Edit**, enter or select: `apps/web`.
+5. Check the box **"Include source files outside of the Root Directory in the Build Step"** (needed to transpile shared monorepo packages).
+6. Click **Save**.
+7. Go to **Deployments** → Click the latest deployment → Click **Redeploy**.
+8. Once complete, your Vercel production URL will serve the Next.js GATEHOUSE Tactical Command Post.
+

@@ -6,6 +6,7 @@ import {
   tool_get_customer_enquiries,
   tool_draft_customer_reply,
   tool_create_invoice,
+  generateClientTransactionApproval,
   APPROVALS_DB,
   AUDIT_LOGS_DB
 } from './businessTools';
@@ -276,14 +277,11 @@ export function executeAgentWorkflow(userPrompt: string): AgentRunResult {
       anomalyData: lowStockResult.anomalies
     });
 
-    rawKernelLogs.push(`[${timeStr()}] [TOOL-RPC] Structuring purchase order with vendor National Logistics Hub`);
-    const poResult = tool_prepare_restock_order({
-      vendor_id: 'VEND-LOGISTICS-77',
-      line_items: [
-        { sku: 'SKU-8892-NEO', quantity: 50 },
-        { sku: 'SKU-1044-CORE', quantity: 20 }
-      ]
-    });
+    // Generate dynamic transaction from realistic scenario catalog
+    newApproval = generateClientTransactionApproval(missionId, userPrompt, targetAgent.code, targetAgent.name);
+    const poResult = newApproval.toolPayload;
+
+    rawKernelLogs.push(`[${timeStr()}] [TOOL-RPC] Structuring purchase order with vendor ${newApproval.supplier}`);
 
     events.push({
       id: 'ev-05',
@@ -293,81 +291,26 @@ export function executeAgentWorkflow(userPrompt: string): AgentRunResult {
       status: 'DONE',
       source: 'netsuite_erp.draft_purchase_order()',
       payloadInput: {
-        vendor_id: 'VEND-LOGISTICS-77',
-        po_number: poResult.po_number,
-        line_items: poResult.line_items.map(l => ({ sku: l.sku, qty: l.quantity, price: l.unit_price })),
-        total_amount: 18500.00,
+        vendor_id: newApproval.supplierCode,
+        po_number: newApproval.poNumber,
+        line_items: newApproval.lineItems?.map(l => ({ sku: l.sku, qty: l.quantity, price: l.unitPrice })),
+        total_amount: newApproval.amount,
         currency: 'INR'
       },
       payloadOutput: {
-        po_id: poResult.po_number,
+        po_id: newApproval.poNumber,
         status: 'DRAFT_PENDING_SIG',
         biometric_gating_tripwire: true,
-        reason: 'EXCEEDS_AUTONOMOUS_LIMIT_14K',
-        delta: '+4500.00 INR'
+        reason: `EXCEEDS_AUTONOMOUS_LIMIT_${newApproval.autonomousLimit}`,
+        delta: `+${newApproval.varianceFormatted} INR`
       }
     });
 
     haltedForApproval = true;
-    rawKernelLogs.push(`[${timeStr()}] [POLICY-ENGINE] Rule POL-093 tripped: amount (₹18,500) > ceiling (₹14,000)`);
+    rawKernelLogs.push(`[${timeStr()}] [POLICY-ENGINE] Rule ${newApproval.policyRule} tripped: amount (${newApproval.amountFormatted}) > ceiling (${newApproval.limitFormatted})`);
     rawKernelLogs.push(`[${timeStr()}] [PERIMETER] Emitted interrupt signal to Gatehouse supervisor node`);
     rawKernelLogs.push(`[${timeStr()}] [WATCHDOG] Holding container thread pending cryptographic signature...`);
 
-    const reqId = '#REQ-8841-B';
-    newApproval = {
-      id: `appr-${Date.now()}`,
-      requestId: reqId,
-      missionId,
-      agentId: 'AGT-02',
-      agentName: 'INVENTORY AGENT',
-      senderEmail: 'inventory.agent@enclave.internal',
-      recipientEmail: 'business.owner@company.internal',
-      subject: `ACTION REQUIRED: Authorize Supplier Purchase Order #PO-8841-B (₹18,500)`,
-      category: 'Procurement & Logistics',
-      isStarred: true,
-      isRead: false,
-      title: 'CREATE SUPPLIER PURCHASE ORDER // RESTOCK',
-      description: 'Critical inventory threshold breach: SKU-8892-NEO stock at 2 units (Min: 10) and SKU-1044-CORE stock at 0 units. Automated vendor requisition drafted to prevent fulfillment outage across East Coast distribution hubs.',
-      prompt: userPrompt,
-      amount: 18500,
-      amountFormatted: '₹18,500 ($34,800.00 USD)',
-      autonomousLimit: 14000,
-      varianceAmount: 4500,
-      currency: 'INR',
-      riskLevel: 'CRITICAL',
-      policyRule: 'RULE_POL_093',
-      enclaveHash: '0x9f4c882a46c3b21',
-      status: 'PENDING',
-      timestamp: 'Just now',
-      reasoningSteps: [
-        'Queried Warehouse 04 East via SAP Connector. Retrieved 1,420 SKUs telemetry matrix.',
-        'Flagged 2 critical depletion events: SKU-8892-NEO (2 left, min 10) and SKU-1044-CORE (0 left, min 8).',
-        'Calculated EOQ replenishment buffer with approved tier-1 supplier VEND-LOGISTICS-77.',
-        'TRIPWIRE ENGAGED: Order total ₹18,500 exceeds autonomous ceiling (₹14,000). Action gated awaiting Business Owner authorization.'
-      ],
-      boundTool: 'netsuite_erp.draft_po (Scope: ledger:write)',
-      toolPayload: {
-        po_number: poResult.po_number,
-        vendor: 'National Logistics Hub',
-        total: 18500.00
-      },
-      lineItems: [
-        {
-          sku: 'SKU-8892-NEO',
-          description: 'High-Bandwidth Transceiver Module 100G',
-          quantity: 50,
-          unitPrice: 250.00,
-          extendedAmount: 12500.00
-        },
-        {
-          sku: 'SKU-1044-CORE',
-          description: 'Optic Switch Processor (Rev 4)',
-          quantity: 20,
-          unitPrice: 300.00,
-          extendedAmount: 6000.00
-        }
-      ]
-    };
     if (newApproval) APPROVALS_DB.unshift(newApproval);
     finalOutput = poResult;
   }

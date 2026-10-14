@@ -101,7 +101,319 @@ export let ENQUIRIES_DB: CustomerEnquiry[] = [
   }
 ];
 
-// Mock initial approval requests
+export function formatINR(amount: number): string {
+  const intPart = Math.round(amount);
+  const s = intPart.toString();
+  if (s.length <= 3) return `₹${s}`;
+  const last3 = s.substring(s.length - 3);
+  let remaining = s.substring(0, s.length - 3);
+  const groups: string[] = [];
+  while (remaining.length > 2) {
+    groups.unshift(remaining.substring(remaining.length - 2));
+    remaining = remaining.substring(0, remaining.length - 2);
+  }
+  if (remaining.length > 0) groups.unshift(remaining);
+  return `₹${groups.join(',')},${last3}`;
+}
+
+export interface BusinessTransactionScenario {
+  id: string;
+  supplier: string;
+  supplierCode: string;
+  supplierAddress: string;
+  category: string;
+  policyRule: string;
+  autonomousLimit: number;
+  shippingFee: number;
+  lineItems: Array<{
+    sku: string;
+    description: string;
+    quantity: number;
+    unitPrice: number;
+    extendedAmount: number;
+  }>;
+}
+
+export const TRANSACTION_SCENARIOS: BusinessTransactionScenario[] = [
+  // SCENARIO 01 (SCENARIO A)
+  {
+    id: 'SCEN-01',
+    supplier: 'National Logistics Hub',
+    supplierCode: 'VEND-NLH-7701',
+    supplierAddress: 'Hub 04, East Logistics Corridor, Sector 18, Gurugram, HR',
+    category: 'Procurement & Hardware Replenishment',
+    policyRule: 'RULE_POL_093',
+    autonomousLimit: 14000,
+    shippingFee: 800,
+    lineItems: [
+      { sku: 'SKU-8892-NEO', description: 'High-Bandwidth Transceiver Module 100G', quantity: 50, unitPrice: 180, extendedAmount: 9000 },
+      { sku: 'SKU-1044-CORE', description: 'Optic Switch Processor (Rev 4)', quantity: 20, unitPrice: 300, extendedAmount: 6000 },
+    ],
+  },
+  // SCENARIO 02 (SCENARIO B)
+  {
+    id: 'SCEN-02',
+    supplier: 'Apex Industrial Supplies',
+    supplierCode: 'VEND-APX-4412',
+    supplierAddress: 'Apex Industrial Estate, Block C, Peenya Industrial Area, Bengaluru, KA',
+    category: 'Network Infrastructure & Optics',
+    policyRule: 'RULE_POL_093',
+    autonomousLimit: 20000,
+    shippingFee: 950,
+    lineItems: [
+      { sku: 'SKU-4410-NET', description: 'Industrial Gigabit Network Controller', quantity: 25, unitPrice: 560, extendedAmount: 14000 },
+      { sku: 'SKU-2291-FBR', description: 'Single-Mode Fiber SFP+ Module', quantity: 40, unitPrice: 210, extendedAmount: 8400 },
+    ],
+  },
+  // SCENARIO 03 (SCENARIO C)
+  {
+    id: 'SCEN-03',
+    supplier: 'Metro Components India',
+    supplierCode: 'VEND-MCI-3309',
+    supplierAddress: 'MIDC Electronic Zone, Mahape, Navi Mumbai, MH',
+    category: 'Sensor Arrays & Edge Gateways',
+    policyRule: 'RULE_POL_093',
+    autonomousLimit: 25000,
+    shippingFee: 1200,
+    lineItems: [
+      { sku: 'SKU-5582-SNS', description: 'Precision Thermal & Humidity Sensor Module', quantity: 80, unitPrice: 240, extendedAmount: 19200 },
+      { sku: 'SKU-3301-GTW', description: 'Tactical Edge IoT Gateway Unit', quantity: 15, unitPrice: 720, extendedAmount: 10800 },
+    ],
+  },
+  // SCENARIO 04
+  {
+    id: 'SCEN-04',
+    supplier: 'Bharat Telematics Ltd',
+    supplierCode: 'VEND-BTL-9921',
+    supplierAddress: 'Export Promotion Industrial Park, Whitefield, Bengaluru, KA',
+    category: 'Wireless Telemetry & Antennae',
+    policyRule: 'RULE_POL_093',
+    autonomousLimit: 22000,
+    shippingFee: 850,
+    lineItems: [
+      { sku: 'SKU-7712-MOD', description: 'Industrial LTE-M Cellular Modem', quantity: 30, unitPrice: 650, extendedAmount: 19500 },
+      { sku: 'SKU-1109-ANT', description: 'High-Gain Omnidirectional Helical Antenna', quantity: 60, unitPrice: 150, extendedAmount: 9000 },
+    ],
+  },
+  // SCENARIO 05
+  {
+    id: 'SCEN-05',
+    supplier: 'Cyberdyne Power Systems',
+    supplierCode: 'VEND-CPS-1029',
+    supplierAddress: 'Cyberdyne Tech Park, HITEC City Phase 2, Hyderabad, TS',
+    category: 'Power Distribution & Backup',
+    policyRule: 'RULE_POL_093',
+    autonomousLimit: 28000,
+    shippingFee: 1100,
+    lineItems: [
+      { sku: 'SKU-9041-PWR', description: 'Redundant DIN-Rail Power Supply Unit 480W', quantity: 12, unitPrice: 1800, extendedAmount: 21600 },
+      { sku: 'SKU-4402-BAT', description: 'Ultracapacitor Energy Storage Module 24V', quantity: 24, unitPrice: 450, extendedAmount: 10800 },
+    ],
+  },
+  // SCENARIO 06
+  {
+    id: 'SCEN-06',
+    supplier: 'Horizon Optoelectronics',
+    supplierCode: 'VEND-HOE-5510',
+    supplierAddress: 'Plot 88, Electronic City Phase 1, Hosur Road, Bengaluru, KA',
+    category: 'Dense Multiplexers & Passive Optics',
+    policyRule: 'RULE_POL_093',
+    autonomousLimit: 21000,
+    shippingFee: 780,
+    lineItems: [
+      { sku: 'SKU-6620-WDM', description: 'Dense Wavelength Division Multiplexer (DWDM)', quantity: 35, unitPrice: 420, extendedAmount: 14700 },
+      { sku: 'SKU-8819-SPL', description: 'Planar Lightwave Circuit Optical Splitter 1x16', quantity: 70, unitPrice: 160, extendedAmount: 11200 },
+    ],
+  },
+  // SCENARIO 07
+  {
+    id: 'SCEN-07',
+    supplier: 'Zenith Circuit Technologies',
+    supplierCode: 'VEND-ZCT-8834',
+    supplierAddress: 'SIPCOT Industrial Complex, Sriperumbudur, Tamil Nadu',
+    category: 'Embedded Compute & Relays',
+    policyRule: 'RULE_POL_093',
+    autonomousLimit: 26000,
+    shippingFee: 920,
+    lineItems: [
+      { sku: 'SKU-3390-MCU', description: 'ARM Cortex-M7 Real-Time Compute Core Board', quantity: 100, unitPrice: 210, extendedAmount: 21000 },
+      { sku: 'SKU-5512-ISO', description: '8-Channel Optoisolated Solid State Relay Pack', quantity: 45, unitPrice: 260, extendedAmount: 11700 },
+    ],
+  },
+  // SCENARIO 08
+  {
+    id: 'SCEN-08',
+    supplier: 'Alpha Quantum Logistics',
+    supplierCode: 'VEND-AQL-7123',
+    supplierAddress: 'Sector 62, Noida Electronic City, Uttar Pradesh',
+    category: 'Thermal & Enclosure Packaging',
+    policyRule: 'RULE_POL_093',
+    autonomousLimit: 24000,
+    shippingFee: 1050,
+    lineItems: [
+      { sku: 'SKU-2201-ENC', description: 'IP67 Ruggedized Industrial DIN Enclosure', quantity: 18, unitPrice: 1150, extendedAmount: 20700 },
+      { sku: 'SKU-9932-FAN', description: 'High-CFM Dual Ball-Bearing Cooling Array', quantity: 36, unitPrice: 220, extendedAmount: 7920 },
+    ],
+  },
+  // SCENARIO 09
+  {
+    id: 'SCEN-09',
+    supplier: 'Delta Fiber Networks',
+    supplierCode: 'VEND-DFN-6641',
+    supplierAddress: 'Salt Lake Sector V, Electronic Complex, Kolkata, WB',
+    category: 'Interconnect Cabling & Attenuators',
+    policyRule: 'RULE_POL_093',
+    autonomousLimit: 19000,
+    shippingFee: 690,
+    lineItems: [
+      { sku: 'SKU-7740-CAB', description: 'Armored Tactical Fiber Patch Cable 10m Duplex', quantity: 120, unitPrice: 140, extendedAmount: 16800 },
+      { sku: 'SKU-3321-ATT', description: 'Variable Optical Inline Attenuator LC/UPC', quantity: 50, unitPrice: 190, extendedAmount: 9500 },
+    ],
+  },
+  // SCENARIO 10
+  {
+    id: 'SCEN-10',
+    supplier: 'Titan Switchgear Industries',
+    supplierCode: 'VEND-TSI-9018',
+    supplierAddress: 'GIDC Industrial Estate, Makarpura, Vadodara, Gujarat',
+    category: 'High-Voltage Protection & Switchgear',
+    policyRule: 'RULE_POL_093',
+    autonomousLimit: 30000,
+    shippingFee: 1350,
+    lineItems: [
+      { sku: 'SKU-1188-BRK', description: 'Industrial Motor Circuit Breaker 63A', quantity: 16, unitPrice: 1250, extendedAmount: 20000 },
+      { sku: 'SKU-4429-SPD', description: 'Type-2 Modular Surge Protection Device', quantity: 30, unitPrice: 480, extendedAmount: 14400 },
+    ],
+  },
+];
+
+let clientScenarioIdx = 0;
+let clientPoCounter = 8840;
+let clientReqCounter = 8841;
+let clientTxnCounter = 9100;
+let clientInvCounter = 7700;
+
+export function generateClientTransactionApproval(
+  missionId: string,
+  userPrompt: string,
+  agentCode: string = 'AGT-02',
+  agentName: string = 'INVENTORY AGENT'
+): ApprovalRequest {
+  const scenario = TRANSACTION_SCENARIOS[clientScenarioIdx % TRANSACTION_SCENARIOS.length];
+  clientScenarioIdx += 1;
+  clientPoCounter += 1;
+  clientReqCounter += 1;
+  clientTxnCounter += 1;
+  clientInvCounter += 1;
+
+  const suffixLetter = String.fromCharCode(65 + (clientPoCounter % 26));
+  const poNumber = `PO-${clientPoCounter}-${suffixLetter}`;
+  const reqId = `#REQ-${clientReqCounter}-${suffixLetter}`;
+  const txnId = `TXN-2026-${clientTxnCounter}`;
+  const invNumber = `INV-2026-${clientInvCounter}`;
+  const apprId = `appr-${Date.now()}-${clientPoCounter}`;
+
+  let subtotal = 0;
+  const lineItems = scenario.lineItems.map(it => {
+    const ext = it.quantity * it.unitPrice;
+    subtotal += ext;
+    return {
+      sku: it.sku,
+      description: it.description,
+      quantity: it.quantity,
+      unitPrice: it.unitPrice,
+      extendedAmount: ext,
+    };
+  });
+
+  const gst = Math.round(subtotal * 0.18 * 100) / 100;
+  const shipping = scenario.shippingFee;
+  const total = subtotal + gst + shipping;
+  const autonomousLimit = scenario.autonomousLimit;
+  const varianceAmount = Math.round((total - autonomousLimit) * 100) / 100;
+
+  const totalFormatted = `${formatINR(total)} ($${Math.round(total * 1.88).toLocaleString()} USD)`;
+  const subtotalFormatted = formatINR(subtotal);
+  const gstFormatted = formatINR(gst);
+  const shippingFormatted = formatINR(shipping);
+  const limitFormatted = formatINR(autonomousLimit);
+  const varianceFormatted = formatINR(varianceAmount);
+
+  const skuSummary = lineItems.map(it => `${it.quantity}x ${it.sku}`).join(', ');
+  const description = `Critical inventory threshold breach for ${skuSummary}. Automated vendor requisition drafted with approved supplier ${scenario.supplier} to prevent fulfillment outage.`;
+
+  const reasoningSteps = [
+    `Queried Warehouse 04 East via SAP Connector. Flagged depletion on ${skuSummary}.`,
+    `Structured purchase requisition for ${scenario.supplier} (${scenario.supplierCode}) totaling Subtotal: ${subtotalFormatted} + GST (18%): ${gstFormatted} + Shipping: ${shippingFormatted}.`,
+    `Calculated gross transaction value: ${totalFormatted} (PO: ${poNumber}, Invoice Ref: ${invNumber}).`,
+    `TRIPWIRE ENGAGED: Calculated total PO value of ${formatINR(total)} exceeds autonomous spending threshold (${limitFormatted}) by ${varianceFormatted}. Sovereign biometric signature mandatory.`,
+  ];
+
+  const toolPayload = {
+    po_number: poNumber,
+    invoice_number: invNumber,
+    transaction_id: txnId,
+    vendor_id: scenario.supplierCode,
+    supplier: scenario.supplier,
+    subtotal,
+    gst,
+    shipping,
+    total_amount: total,
+    currency: 'INR',
+    autonomous_limit: autonomousLimit,
+    variance: varianceAmount,
+    line_items: lineItems,
+    biometric_gating_tripwire: true,
+  };
+
+  return {
+    id: apprId,
+    requestId: reqId,
+    missionId,
+    agentId: agentCode,
+    agentName,
+    senderEmail: `${agentCode.toLowerCase()}.operations@enclave.internal`,
+    recipientEmail: 'business.owner@company.internal',
+    subject: `ACTION REQUIRED: Authorize Supplier Purchase Order #${poNumber} (${formatINR(total)})`,
+    category: scenario.category,
+    isStarred: true,
+    isRead: false,
+    title: `CREATE SUPPLIER PURCHASE ORDER // ${scenario.supplier.toUpperCase()}`,
+    description,
+    prompt: userPrompt,
+    amount: total,
+    amountFormatted: totalFormatted,
+    autonomousLimit,
+    varianceAmount,
+    currency: 'INR',
+    riskLevel: 'CRITICAL',
+    policyRule: scenario.policyRule,
+    enclaveHash: '0x' + Array.from({ length: 16 }, () => Math.floor(Math.random() * 16).toString(16)).join(''),
+    status: 'PENDING',
+    timestamp: 'Just now',
+    reasoningSteps,
+    boundTool: `netsuite_erp.draft_po (Vendor: ${scenario.supplierCode})`,
+    toolPayload,
+    lineItems,
+    supplier: scenario.supplier,
+    supplierCode: scenario.supplierCode,
+    supplierAddress: scenario.supplierAddress,
+    poNumber,
+    invoiceNumber: invNumber,
+    transactionId: txnId,
+    subtotal,
+    gst,
+    shipping,
+    total,
+    subtotalFormatted,
+    gstFormatted,
+    shippingFormatted,
+    limitFormatted,
+    varianceFormatted,
+  };
+}
+
+// Initial Approval Requests in Business Database
 export let APPROVALS_DB: ApprovalRequest[] = [
   {
     id: 'appr-01',
@@ -109,14 +421,20 @@ export let APPROVALS_DB: ApprovalRequest[] = [
     missionId: 'MS-8902-RESTOCK',
     agentId: 'AGT-02',
     agentName: 'INVENTORY AGENT',
-    title: 'CREATE SUPPLIER PURCHASE ORDER',
-    description: 'Critical inventory threshold breach: SKU-8892-NEO stock at 2 units (Min: 10) and SKU-1044-CORE stock at 0 units. Automated vendor requisition drafted to prevent fulfillment outage across East Coast distribution hubs.',
+    senderEmail: 'inventory.operations@enclave.internal',
+    recipientEmail: 'business.owner@company.internal',
+    subject: 'ACTION REQUIRED: Authorize Supplier Purchase Order #PO-8841-B (₹18,500)',
+    category: 'Procurement & Hardware Replenishment',
+    isStarred: true,
+    isRead: false,
+    title: 'CREATE SUPPLIER PURCHASE ORDER // NATIONAL LOGISTICS HUB',
+    description: 'Critical inventory threshold breach: SKU-8892-NEO stock at 2 units (Min: 10) and SKU-1044-CORE stock at 0 units. Automated vendor requisition drafted with approved supplier National Logistics Hub to prevent fulfillment outage across East Coast distribution hubs.',
     prompt: 'Check inventory, find low-stock products and prepare a restock order.',
-    amount: 18500, // or ₹18,500 / $34,800 equiv
-    amountFormatted: '₹18,500 ($34,800.00 USD)',
+    amount: 18500,
+    amountFormatted: '₹18,500 ($34,780.00 USD)',
     autonomousLimit: 14000,
     varianceAmount: 4500,
-    currency: 'USD',
+    currency: 'INR',
     riskLevel: 'CRITICAL',
     policyRule: 'RULE_POL_093',
     enclaveHash: '0x9f4c882a46c3b21',
@@ -125,28 +443,37 @@ export let APPROVALS_DB: ApprovalRequest[] = [
     reasoningSteps: [
       'Queried Warehouse 04 East via SAP Connector. Retrieved 1,420 SKUs telemetry matrix.',
       'Identified critical depletion on SKU-8892-NEO (2 units remaining; safe min: 10) and SKU-1044-CORE (0 units; stockout breach).',
-      'Calculated safety buffer restock: 50 units for transceiver module and 20 units for processor using wholesale SLA terms with Vendor-77.',
-      'Staged purchase requisition draft #PO-8841-B in sandbox enclave for dry-run validation.',
-      'TRIPWIRE ENGAGED: Calculated total PO value of ₹18,500 ($34,800 USD) exceeds autonomous agent purchase threshold (₹14,000 max). Sovereign biometric signature mandatory.'
+      'Structured purchase requisition for National Logistics Hub (VEND-NLH-7701) totaling Subtotal: ₹15,000 + GST (18%): ₹2,700 + Shipping: ₹800.',
+      'Calculated gross transaction value: ₹18,500 ($34,780 USD) (PO: PO-8841-B, Invoice Ref: INV-2026-7701).',
+      'TRIPWIRE ENGAGED: Calculated total PO value of ₹18,500 exceeds autonomous agent purchase threshold (₹14,000 max). Sovereign biometric signature mandatory.'
     ],
-    boundTool: 'netsuite_erp.draft_po (Scope: ledger:write)',
+    boundTool: 'netsuite_erp.draft_po (Vendor: VEND-NLH-7701)',
     toolPayload: {
-      vendor_id: 'VEND-LOGISTICS-77',
+      vendor_id: 'VEND-NLH-7701',
+      supplier: 'National Logistics Hub',
       po_number: 'PO-8841-B',
+      invoice_number: 'INV-2026-7701',
+      transaction_id: 'TXN-2026-9101',
+      subtotal: 15000,
+      gst: 2700,
+      shipping: 800,
+      total_amount: 18500,
+      currency: 'INR',
       line_items: [
-        { sku: 'SKU-8892-NEO', qty: 50, price: 250.00 },
+        { sku: 'SKU-8892-NEO', qty: 50, price: 180.00 },
         { sku: 'SKU-1044-CORE', qty: 20, price: 300.00 }
       ],
-      total_amount: 18500.00,
-      currency: 'USD'
+      autonomous_limit: 14000,
+      variance: 4500,
+      biometric_gating_tripwire: true,
     },
     lineItems: [
       {
         sku: 'SKU-8892-NEO',
         description: 'High-Bandwidth Transceiver Module 100G',
         quantity: 50,
-        unitPrice: 250.00,
-        extendedAmount: 12500.00
+        unitPrice: 180.00,
+        extendedAmount: 9000.00
       },
       {
         sku: 'SKU-1044-CORE',
@@ -155,7 +482,22 @@ export let APPROVALS_DB: ApprovalRequest[] = [
         unitPrice: 300.00,
         extendedAmount: 6000.00
       }
-    ]
+    ],
+    supplier: 'National Logistics Hub',
+    supplierCode: 'VEND-NLH-7701',
+    supplierAddress: 'Hub 04, East Logistics Corridor, Sector 18, Gurugram, HR',
+    poNumber: 'PO-8841-B',
+    invoiceNumber: 'INV-2026-7701',
+    transactionId: 'TXN-2026-9101',
+    subtotal: 15000,
+    gst: 2700,
+    shipping: 800,
+    total: 18500,
+    subtotalFormatted: '₹15,000',
+    gstFormatted: '₹2,700',
+    shippingFormatted: '₹800',
+    limitFormatted: '₹14,000',
+    varianceFormatted: '₹4,500',
   },
   {
     id: 'appr-02',

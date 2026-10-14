@@ -7,60 +7,67 @@
 
 @layer base {
   :root {
-    --background: #111318;
-    --foreground: #e2e2e9;
+    --background: #FFFFFF;
+    --foreground: #111111;
   }
 
   html, body {
     width: 100%;
     margin: 0;
     padding: 0;
-    background-color: #111318;
-    color: #e2e2e9;
+    background-color: #FAFAFA;
+    color: #111111;
     font-family: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
     overscroll-behavior: none;
   }
 }
 
-.tactical-grid {
-  background-image: 
-    linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
-  background-size: 28px 28px;
-}
-
-.tactical-chamfer {
-  clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 0 100%);
-}
-
-.tactical-chamfer-both {
-  clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
-}
-
-.reticle-box {
-  position: relative;
-}
-
-.reticle-box::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
+/* Custom Scrollbar */
+::-webkit-scrollbar {
   width: 6px;
   height: 6px;
-  border-top: 1.5px solid #ef4444;
-  border-left: 1.5px solid #ef4444;
-  pointer-events: none;
+}
+::-webkit-scrollbar-track {
+  background: #FAFAFA;
+}
+::-webkit-scrollbar-thumb {
+  background: #E5E5E5;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #CCCCCC;
 }
 
-.reticle-box::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  right: 0;
-  width: 6px;
-  height: 6px;
-  border-bottom: 1.5px solid #ef4444;
-  border-right: 1.5px solid #ef4444;
-  pointer-events: none;
+/* Clean Enterprise SaaS Utilities */
+.enterprise-card {
+  background-color: #FFFFFF;
+  border: 1px solid #E5E5E5;
+  border-radius: 12px;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.04);
+}
+
+.enterprise-btn-primary {
+  background-color: #111111;
+  color: #FFFFFF;
+  font-weight: 500;
+  border-radius: 8px;
+  transition: all 150ms ease-in-out;
+}
+.enterprise-btn-primary:hover {
+  background-color: #000000;
+}
+
+.enterprise-btn-secondary {
+  background-color: #FFFFFF;
+  color: #111111;
+  border: 1px solid #E5E5E5;
+  font-weight: 500;
+  border-radius: 8px;
+  transition: all 150ms ease-in-out;
+}
+.enterprise-btn-secondary:hover {
+  background-color: #F5F5F5;
+  border-color: #CCCCCC;
 }

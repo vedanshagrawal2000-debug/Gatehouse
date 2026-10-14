@@ -99,6 +99,11 @@ DATABASE_URL="postgresql://postgres:your-password@db.your-project.supabase.co:54
    ```
 5. Click **Deploy**.
 
+> ⚠️ **CRITICAL NOTE FOR MONOREPO VERCEL DEPLOYMENT:**
+> The **Root Directory** in Vercel project settings MUST be set to `apps/web`.
+> If Root Directory is left as the repo root or accidentally set to `apps/api`, Vercel deploys FastAPI's `main.py` and returns `{"service":"GATEHOUSE Tactical Operations API"}` at `/`.
+> Ensure **Root Directory** is `apps/web` so Vercel serves the Next.js Tactical Command Post.
+
 ---
 
 ## 5. Security & Isolation Checklist

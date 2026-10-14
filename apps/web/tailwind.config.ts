@@ -11,38 +11,49 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        surface: '#111318',
-        'surface-dim': '#111318',
-        'surface-bright': '#37393f',
-        'surface-container-lowest': '#0c0e13',
-        'surface-container-low': '#1a1b21',
-        'surface-container': '#1e2025',
-        'surface-container-high': '#282a2f',
-        'surface-container-highest': '#33353a',
-        'on-surface': '#e2e2e9',
-        'on-surface-variant': '#e6bdb8',
-        'outline': '#ac8884',
-        'outline-variant': '#5c403c',
-        primary: '#ffb4ab',
-        'primary-container': '#dc2626',
-        'on-primary': '#690005',
-        'on-primary-container': '#fff6f5',
-        secondary: '#4edea3',
-        'secondary-container': '#00a572',
-        'on-secondary': '#003824',
-        tertiary: '#ffb95f',
-        'tertiary-container': '#a06500',
-        'on-tertiary': '#472a00',
-        error: '#ffb4ab',
-        'error-container': '#93000a',
-        'brand-base': '#08090B',
-        'border-default': '#2A2E39',
-        'border-crimson': '#EF4444',
+        // Professional Monochrome Palette
+        surface: '#FFFFFF',
+        'surface-subtle': '#FAFAFA',
+        'surface-muted': '#F5F5F5',
+        'surface-dim': '#F0F0F0',
+        'surface-bright': '#FFFFFF',
+        'surface-container-lowest': '#FFFFFF',
+        'surface-container-low': '#FAFAFA',
+        'surface-container': '#F5F5F5',
+        'surface-container-high': '#EBEBEB',
+        'surface-container-highest': '#E0E0E0',
+        'on-surface': '#111111',
+        'on-surface-variant': '#666666',
+        'outline': '#D4D4D8',
+        'outline-variant': '#E4E4E7',
+        'border-default': '#E5E5E5',
+        'border-subtle': '#EEEEEE',
+        'border-strong': '#111111',
+        'brand-base': '#111111',
+
+        // Primary Buttons & Accents (Solid Black)
+        primary: '#111111',
+        'primary-container': '#111111',
+        'on-primary': '#FFFFFF',
+        'on-primary-container': '#FFFFFF',
+
+        // Restrained Semantic Accents
+        secondary: '#059669', // Emerald-600
+        'secondary-container': '#ECFDF5', // Emerald-50
+        'on-secondary': '#065F46', // Emerald-800
+        
+        tertiary: '#D97706', // Amber-600
+        'tertiary-container': '#FFFBEB', // Amber-50
+        'on-tertiary': '#92400E', // Amber-800
+
+        error: '#E11D48', // Rose-600
+        'error-container': '#FFF1F2', // Rose-50
+        'on-error': '#9F1239', // Rose-800
       },
       fontFamily: {
-        sans: ['Geist', 'sans-serif'],
-        mono: ['JetBrains Mono', 'monospace'],
-        headline: ['Space Grotesk', 'sans-serif'],
+        sans: ['Geist', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+        mono: ['JetBrains Mono', 'Menlo', 'monospace'],
+        headline: ['Space Grotesk', 'Geist', 'sans-serif'],
         tactical: ['JetBrains Mono', 'monospace'],
       },
       spacing: {
@@ -56,6 +67,11 @@ const config: Config = {
         margin: '1rem',
         'margin-md': '1.5rem',
         'margin-lg': '2rem',
+      },
+      boxShadow: {
+        subtle: '0 1px 2px 0 rgba(0, 0, 0, 0.04)',
+        card: '0 1px 3px 0 rgba(0, 0, 0, 0.06), 0 1px 2px -1px rgba(0, 0, 0, 0.04)',
+        elevated: '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05)',
       },
     },
   },

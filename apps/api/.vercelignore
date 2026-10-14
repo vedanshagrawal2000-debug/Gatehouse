@@ -1,0 +1,3 @@
+# FastAPI Backend is deployed on Render, NOT Vercel.
+# Ignore all files to prevent accidental deployment to Vercel.
+*
